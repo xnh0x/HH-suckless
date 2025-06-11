@@ -79,7 +79,7 @@
 
     function pageReloadKey() {
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'r') {
+            if (e.key === 'r' && document.activeElement.tagName.toLowerCase() !== 'input') {
                 window.location.reload();
             }
         });
