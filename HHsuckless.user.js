@@ -68,6 +68,14 @@
         waifu();
     }
 
+    if (window.location.pathname === '/path-of-valor.html'
+        || window.location.pathname === '/path-of-glory.html') {
+        /*
+         * - remove claim all
+         */
+        PoVG();
+    }
+
     function removePreviewBlur() {
         let sheet = document.createElement("style");
         sheet.textContent = [
@@ -259,6 +267,14 @@
         function copyGirls() {
             const text = girls_data_list.reduce((csv, girl) => {csv += `\n${girl.id_girl},${girl.grade_skins.length}`; return csv;}, 'id,skins');
             copyText(text);
+        }
+    }
+
+    function PoVG() {
+        const claimAll = document.querySelector('.potions-paths-tier.unclaimed.claim-all-rewards');
+        if (claimAll) {
+            claimAll.classList.remove('claim-all-rewards');
+            claimAll.querySelector('#claim-all').style.display = 'none';
         }
     }
 
