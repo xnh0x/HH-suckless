@@ -170,7 +170,7 @@
                 console.log('HH suckless: HH++ is missing info, scroll through whole harem to update!')
                 return;
             }
-            const {name, shards} = girls[i];
+            const {name, shards, grade_offsets} = girls[i];
             const haremLink = HHPlusPlus.Helpers.getHref(`/characters/${love_raids[i].id_girl}`);
             const wikiLink = HHPlusPlus.Helpers.getWikiLink(name, love_raids[i].id_girl, HHPlusPlus.I18n.getLang())
             const objectives = raidCard.querySelectorAll('.classic-girl');
@@ -192,6 +192,14 @@
                     rightImage.src = `${HHPlusPlus.Helpers.getCDNHost()}/pictures/girls/${love_raids[i].id_girl}/grade_skins/grade_skin1.png`;
                 }
             }
+
+            // sometimes the poses are also hidden instead of just black
+            raidCard.querySelectorAll('.girl-img').forEach((img) => {
+                if (img.style.visibility === 'hidden') {
+                    img.style.visibility = 'visible';
+                    img.style.marginTop = `-${grade_offsets[0][0]/7}px`;
+                }
+            })
 
             // add go buttons if there aren't any
             addMissingGoButton(girl);
