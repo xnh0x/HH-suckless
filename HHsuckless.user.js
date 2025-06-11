@@ -54,6 +54,13 @@
         await loveRaids();
     }
 
+    if (window.location.pathname.includes('/quest/')) {
+        /*
+         * - switch scene resolution from 800x450 to 1600x900
+         */
+        quest();
+    }
+
     function removePreviewBlur() {
         let sheet = document.createElement("style");
         sheet.textContent = [
@@ -211,5 +218,12 @@
                 e.querySelector('.shards-container').appendChild(button);
             }
         }
+    }
+
+    function quest() {
+        HHPlusPlus.Helpers.doWhenSelectorAvailable('#background', () => {
+            const bg = $('#background')[0];
+            bg.src = bg.src.replace('800x450', '1600x900');
+        })
     }
 })();
