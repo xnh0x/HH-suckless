@@ -32,6 +32,7 @@
          * - swap the best opponent to the left
          *     decided by highest chance then highest mojo
          * - 'space' key starts fight against the best opponent
+         * - '1', '2', '3' keys start battles against the three opponents
          */
         seasonArena();
     }
