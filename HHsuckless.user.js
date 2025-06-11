@@ -14,7 +14,7 @@
 
 (async function () {
     'use strict';
-    /*global love_raids,GT,HHPlusPlus*/
+    /*global $,love_raids,GT,HHPlusPlus,girls_data_list*/
 
     /*
      * - removes blur and lock icon from locked poses in the previews for girls
@@ -59,6 +59,13 @@
          * - switch scene resolution from 800x450 to 1600x900
          */
         quest();
+    }
+
+    if (window.location.pathname === '/waifu.html') {
+        /*
+         * - button to export owned girls/skins for optimal team script
+         */
+        waifu();
     }
 
     function removePreviewBlur() {
@@ -225,5 +232,34 @@
             const bg = $('#background')[0];
             bg.src = bg.src.replace('800x450', '1600x900');
         })
+    }
+
+    function waifu() {
+        const div = $(`
+            <div style="display: flex">
+                <button id="copy_girls" class="square_blue_btn" style="margin-bottom: 8px; margin-left: 8px; display: block">
+                    <span><img alt="Copy owned girls and skins" tooltip="Copy owned girls and skins" src="${HHPlusPlus.Helpers.getCDNHost()}/design/ic_books_gray.svg"></span>
+                </button>
+            </div>`)[0];
+        const filterButton = $('#filter_girls')[0];
+        filterButton.before(div);
+        filterButton.remove();
+        const copyButton = $('#copy_girls')[0];
+        copyButton.before(filterButton);
+        copyButton.addEventListener('click', copyGirls);
+
+        function copyGirls() {
+            const text = girls_data_list.reduce((csv, girl) => {csv += `\n${girl.id_girl},${girl.grade_skins.length}`; return csv;}, 'id,skins');
+            copyText(text);
+        }
+    }
+
+    function copyText(text) {
+        // navigator.clipboard.writeText doesn't work inside an iframe due to missing permissions
+        const textArea = $(`<textarea>${text}</textarea>`)[0];
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        textArea.remove();
     }
 })();
