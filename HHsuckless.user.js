@@ -16,6 +16,8 @@
     'use strict';
     /*global $,love_raids,GT,HHPlusPlus,girls_data_list*/
 
+    log(`version: ${GM_info.script.version}`);
+
     /*
      * - removes blur and lock icon from locked poses in the previews for girls
      */
@@ -103,7 +105,7 @@
 
         // try to sort immediately and enable the observer in case rena's results weren't available yet
         if (!sortOpponents()) {
-            console.log('HH suckless: waiting for rena');
+            log('waiting for rena');
             observer.observe(document, {childList: true, subtree: true});
         }
 
@@ -147,7 +149,7 @@
                     bestOpponent.querySelector(`.green_button_L.btn_season_perform`).click();
                 }
             });
-            console.log('HH suckless: opponents sorted');
+            log('opponents sorted');
 
             return true;
         }
@@ -175,7 +177,7 @@
 
         document.querySelectorAll('.raid-card').forEach((raidCard, i) => {
             if (!girls[i]) {
-                console.log('HH suckless: HH++ is missing info, scroll through whole harem to update!')
+                log('HH++ is missing info, scroll through whole harem to update!')
                 return;
             }
             const {name, shards, grade_offsets} = girls[i];
@@ -276,6 +278,10 @@
             claimAll.classList.remove('claim-all-rewards');
             claimAll.querySelector('#claim-all').style.display = 'none';
         }
+    }
+
+    function log(...args) {
+        console.log('HH suckless:', ...args);
     }
 
     function copyText(text) {
