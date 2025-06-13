@@ -20,8 +20,9 @@
 
     /*
      * - removes blur and lock icon from locked poses in the previews for girls
+     * - fixes img src for unlocked scenes
      */
-    removePreviewBlur();
+    girlPreview();
 
     /*
      * - 'R' key shortcut to reload current page since an actual reload
@@ -78,13 +79,19 @@
         PoVG();
     }
 
-    function removePreviewBlur() {
+    function girlPreview() {
         let sheet = document.createElement("style");
         sheet.textContent = [
             '.pose-preview_wrapper.locked .pose-preview { filter: blur(0) !important; }',
             '.pose-preview_wrapper.locked .preview-locked_icn { display: none !important; }',
         ].join(' ');
         document.head.appendChild(sheet);
+
+        repeatOnChange('#common-popups', () => {
+            $('#scenes-tab_container .scene-preview_wrapper.unlocked img').each((i, img) => {
+                img.src = HHPlusPlus.Helpers.getHref(img.src);
+            });
+        });
     }
 
     function pageReloadKey() {
@@ -293,5 +300,25 @@
         textArea.select();
         document.execCommand('copy');
         textArea.remove();
+    }
+
+    async function runOnChange(selectors, func) {
+        const observer = new MutationObserver(async () => {
+            observer.disconnect();
+            await func();
+        });
+        observer.observe(document.querySelector(selectors), {childList: true, subtree: true});
+    }
+
+    async function repeatOnChange(selectors, func, runImmediately = false) {
+        const observer = new MutationObserver(async () => {
+            observer.disconnect();
+            await func();
+            observer.observe(document.querySelector(selectors), {childList: true, subtree: true});
+        });
+        if (runImmediately) {
+            await func();
+        }
+        observer.observe(document.querySelector(selectors), {childList: true, subtree: true});
     }
 })();
