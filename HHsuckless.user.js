@@ -18,6 +18,11 @@
 
     log(`version: ${GM_info.script.version}`);
 
+    const LS = {
+        labShopCycleEnd: 'HHsucklessLabShopCycleEnd',
+        labShopStock: 'HHsucklessLabShopStock',
+    }
+
     /*
      * - removes blur and lock icon from locked poses in the previews for girls
      * - fixes img src for unlocked scenes
@@ -77,6 +82,16 @@
          * - remove claim all
          */
         PoVG();
+    }
+
+    if (window.location.pathname === '/labyrinth.html') {
+        /*
+         * - shop timer improvement
+         *     tries to show when the next restock happens. it will be a little
+         *     inaccurate if last restock was triggered on a different device,
+         *     but it will show when the next restock happens at the latest
+         */
+        labyrinth();
     }
 
     function girlPreview() {
@@ -287,6 +302,119 @@
                 claimAll.querySelector('#claim-all').style.display = 'none';
             }
         }, true);
+    }
+
+    function labyrinth() {
+        // shop timer
+        HHPlusPlus.Helpers.doWhenSelectorAvailable('#shop_tab_container .item-container .slot', async () => {
+            const oldCycleEnd = +localStorage.getItem(LS.labShopCycleEnd);
+            const twelveHours = 12 * 60 * 60;
+
+            const currentShopCycleEnd = detectRestock() || (oldCycleEnd < server_now_ts)
+                ? Math.min(server_now_ts + cycle_end_in_seconds,  // shop will restock next reset
+                    Math.floor(Date.now() / 1000) + twelveHours)  // shop will restock in 12h
+                : oldCycleEnd  // shop restock hasn't happened yet
+            localStorage.setItem(LS.labShopCycleEnd, currentShopCycleEnd.toString());
+
+            await repeatOnChange('#shop_tab_container .shop-timer', setShopTimer, true);
+
+            const updateTimer = setInterval(function() {
+                const timer = $('#shop_tab_container .shop-timer p span')[0];
+                if (timer.innerText === 'Now') {
+                    clearInterval(updateTimer);
+                } else {
+                    setShopTimer();
+                }
+            }, 1000);
+
+            function setShopTimer() {
+                const timer = $('#shop_tab_container .shop-timer p span')[0];
+                const seconds = currentShopCycleEnd - Math.floor(Date.now() / 1000);
+                if (seconds > 0) {
+                    const h = Math.floor(seconds / 3600);
+                    const m = Math.floor((seconds % 3600) / 60);
+                    const s = seconds % 60;
+                    timer.innerText = (h > 0 ? `${h}h ` : '') + (h > 0 || m > 0 ? `${m}m ` : '') + `${s}s`;
+                } else {
+                    timer.innerText = 'Now';
+                }
+            }
+        });
+
+        function detectRestock() {
+            const oldStock = JSON.parse(localStorage.getItem(LS.labShopStock)) || [];
+            const currentStock = Array.from($('#shop_tab_container .item-container .slot')).map(parseShopItem);
+            console.log(oldStock, currentStock);
+            if (currentStock.length === 0) {
+                log(`couldn't read inventory`)
+                return false;
+            }
+            localStorage.setItem(LS.labShopStock, JSON.stringify(currentStock));
+            return currentStock.reduce((acc, curr, i) => {
+                if (i >= oldStock.length || curr === 'sold') {
+                    // current slot was added by monthly card or current
+                    // slot has been bought out
+                    return acc;
+                }
+                return acc || curr !== oldStock[i];
+            }, false);
+        }
+
+        function parseShopItem(item) {
+            if (item.classList.contains('slot_empty')) {
+                return 'sold';
+            }
+            if (item.classList.contains('slot_girl_shards')) {
+                const shards = item.querySelector('.shards');
+                const amount = shards.querySelector('p span').innerText;
+                return `${shards.getAttribute('name')} ${amount}`;
+            }
+            if (item.classList.contains('slot_gems')) {
+                return item.querySelector('span').className;
+            }
+            if (item.classList.contains('slot_hard_currency')) {
+                return 'KB';
+            }
+            if (item.classList.contains('slot_rejuvenation_stone')) {
+                return 'ST';
+            }
+            if (item.classList.contains('slot_energy_fight')) {
+                return 'CP';
+            }
+            if (item.classList.contains('random_equipment')) {
+                return 'HE';
+            }
+            if (item.classList.contains('slot_girl_armor')) {
+                return 'GE';
+            }
+            if (item.classList.contains('slot_mc')) {
+                return item.querySelector('.mc-reward div').innerText;
+            }
+            if (item.classList.contains('slot_scrolls_mythic')) {
+                return 'SM';
+            }
+            if (item.classList.contains('slot_scrolls_legendary')) {
+                return 'SL';
+            }
+            if (item.classList.contains('slot_scrolls_epic')) {
+                return 'SE';
+            }
+            if (item.classList.contains('slot_scrolls_rare')) {
+                return 'SR';
+            }
+            if (item.classList.contains('slot_scrolls_common')) {
+                return 'SC';
+            }
+            if (item.classList.contains('slot_orbs')) {
+                return item.querySelector('span').classList[1];
+            }
+            if (item.classList.contains('mythic')) {
+                const itemId = item.getAttribute('id_item');
+                if (itemId) return `${itemId}`;
+            }
+            log('lab shop item not parsed', item, item.className)
+            return item.className;
+        }
     }
 
     function log(...args) {
