@@ -273,11 +273,13 @@
     }
 
     function PoVG() {
-        const claimAll = document.querySelector('.potions-paths-tier.unclaimed.claim-all-rewards');
-        if (claimAll) {
-            claimAll.classList.remove('claim-all-rewards');
-            claimAll.querySelector('#claim-all').style.display = 'none';
-        }
+        repeatOnChange('.potions-paths-progress-bar-tiers', () => {
+            const claimAll = $('.potions-paths-tier.unclaimed.claim-all-rewards')[0];
+            if (claimAll) {
+                claimAll.classList.remove('claim-all-rewards');
+                claimAll.querySelector('#claim-all').style.display = 'none';
+            }
+        }, true);
     }
 
     function log(...args) {
