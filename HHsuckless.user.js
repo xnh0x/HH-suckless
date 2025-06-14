@@ -35,6 +35,11 @@
      */
     pageReloadKey();
 
+    /*
+     * - disable fade transition when opening the navigation menu
+     */
+    mainMenu();
+
     if (window.location.pathname === '/season-arena.html') {
         /*
          * - swap the best opponent to the left
@@ -115,6 +120,12 @@
                 window.location.reload();
             }
         });
+    }
+
+    function mainMenu() {
+        HHPlusPlus.Helpers.doWhenSelectorAvailable('#contains_all > nav > [rel="content"] > div', () => {
+            $('#contains_all > nav > [rel="content"] > div')[0].style.transition = 'none';
+        })
     }
 
     function seasonArena() {
