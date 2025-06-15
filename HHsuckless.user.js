@@ -318,49 +318,58 @@
     function labyrinth() {
         // shop timer
         HHPlusPlus.Helpers.doWhenSelectorAvailable('#shop_tab_container .item-container .slot', async () => {
-            const oldCycleEnd = +localStorage.getItem(LS.labShopCycleEnd);
-            const twelveHours = 12 * 60 * 60;
+            let currentShopCycleEnd = updateCycleEnd();
 
-            const currentShopCycleEnd = detectRestock() || (oldCycleEnd < server_now_ts)
-                ? Math.min(server_now_ts + cycle_end_in_seconds,  // shop will restock next reset
-                    Math.floor(Date.now() / 1000) + twelveHours)  // shop will restock in 12h
-                : oldCycleEnd  // shop restock hasn't happened yet
-            localStorage.setItem(LS.labShopCycleEnd, currentShopCycleEnd.toString());
+            await repeatOnChange('#shop_tab_container', setShopTimer, true);
 
-            await repeatOnChange('#shop_tab_container .shop-timer', setShopTimer, true);
-
-            const updateTimer = setInterval(function() {
+            setInterval(function() {
                 const timer = $('#shop_tab_container .shop-timer p span')[0];
-                if (timer.innerText === 'Now') {
-                    clearInterval(updateTimer);
-                } else {
-                    setShopTimer();
+                if (timer) {
+                    // just to trigger setShopTimer through the observer
+                    timer.innerText = '';
                 }
             }, 1000);
 
             function setShopTimer() {
-                const timer = $('#shop_tab_container .shop-timer p span')[0];
+                const timer = $('#shop_tab_container .shop-timer p')[0];
+                if (!timer) { return; }
                 const seconds = currentShopCycleEnd - Math.floor(Date.now() / 1000);
                 if (seconds > 0) {
                     const h = Math.floor(seconds / 3600);
                     const m = Math.floor((seconds % 3600) / 60);
                     const s = seconds % 60;
-                    timer.innerText = (h > 0 ? `${h}h ` : '') + (h > 0 || m > 0 ? `${m}m ` : '') + `${s}s`;
+                    const timeString = (h > 0 ? `${h}h ` : '') + (h > 0 || m > 0 ? `${m}m ` : '') + `${s}s`;
+                    timer.innerHTML = `${GT.design.market_new_stock}<span rel="expires">${timeString}</span>`;
                 } else {
-                    timer.innerText = 'Now';
+                    // since the timer is the latest time that restocking happens it must have
+                    // happened now so the cycle end is forced to update and the stock is grayed
+                    // out until the shop is reopened
+                    currentShopCycleEnd = updateCycleEnd(true);
+                    timer.innerHTML = 'Refresh!';
+                    $('.shop-section')[0].style.filter = 'grayscale(1)';
+                    // forget the current stock so opening the shop later won't incorrectly assume
+                    // another restocking has happened because the inventory changed
+                    localStorage.removeItem(LS.labShopStock);
                 }
+            }
+
+            function updateCycleEnd(force = false) {
+                const oldCycleEnd = +localStorage.getItem(LS.labShopCycleEnd);
+                const twelveHours = 12 * 60 * 60;
+
+                const newShopCycleEnd = force || detectRestock() || (oldCycleEnd < server_now_ts)
+                    ? Math.min(server_now_ts + cycle_end_in_seconds,  // shop will restock next reset
+                        Math.floor(Date.now() / 1000) + twelveHours)  // shop will restock in 12h
+                    : oldCycleEnd  // shop restock hasn't happened yet
+                localStorage.setItem(LS.labShopCycleEnd, newShopCycleEnd.toString());
+                return newShopCycleEnd;
             }
         });
 
         function detectRestock() {
             const oldStock = JSON.parse(localStorage.getItem(LS.labShopStock)) || [];
-            const currentStock = Array.from($('#shop_tab_container .item-container .slot')).map(parseShopItem);
-            console.log(oldStock, currentStock);
-            if (currentStock.length === 0) {
-                log(`couldn't read inventory`)
-                return false;
-            }
-            localStorage.setItem(LS.labShopStock, JSON.stringify(currentStock));
+            const currentStock = updateStock();
+            if (!currentStock) { return false; }
             return currentStock.reduce((acc, curr, i) => {
                 if (i >= oldStock.length || curr === 'sold') {
                     // current slot was added by monthly card or current
@@ -369,6 +378,16 @@
                 }
                 return acc || curr !== oldStock[i];
             }, false);
+        }
+
+        function updateStock() {
+            const currentStock = Array.from($('#shop_tab_container .item-container .slot')).map(parseShopItem);
+            if (currentStock.length === 0) {
+                log(`couldn't read inventory`)
+                return null;
+            }
+            localStorage.setItem(LS.labShopStock, JSON.stringify(currentStock));
+            return currentStock;
         }
 
         function parseShopItem(item) {
