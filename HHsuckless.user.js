@@ -19,8 +19,132 @@
     log(`version: ${GM_info.script.version}`);
 
     const LS = {
+        labFavorites: 'HHsucklessLabFavorites',
         labShopCycleEnd: 'HHsucklessLabShopCycleEnd',
         labShopStock: 'HHsucklessLabShopStock',
+    }
+
+    class FavoriteLabGirls {
+        constructor() {
+            this.favoriteIds = JSON.parse(localStorage.getItem(LS.labFavorites)) || [];
+            this.toggle = $('<div class="favourite-toggle"></div>');
+            this.addCSS();
+        }
+
+        addCSS() {
+            let sheet = document.createElement("style");
+            sheet.textContent = `
+                .harem-girl-container,
+                .girl-container {
+                    position: relative;
+                }
+                .girl-container {
+                    /* by default the containers have an inconsistent width
+                       which makes the stars look unaligned */
+                    width: 4.5rem; 
+                }
+                .harem-girl-container .favourite-toggle {
+                    /* slightly smaller to not touch the turn order */
+                    height: 22px;
+                    width: 22px;
+                    background-size: 22px;
+                    top: 2px;
+                    right: 2px;
+                }
+                .favourite-toggle {
+                    position: absolute;
+                    display: none;
+                    height: 25px;
+                    width: 25px;
+                    top: 0px;
+                    right: 0px;
+                    background-size: 25px;
+                    background-repeat: no-repeat;
+                    background-position: center;
+                    z-index: 1;
+                    border-top-right-radius: 5px;
+                    border-bottom-left-radius: 5px;
+                }
+                .harem-girl-container:hover[data-is-favourite="false"] .favourite-toggle,
+                .harem-girl-container[data-is-favourite="true"] .favourite-toggle,
+                .girl-container:hover[data-is-favourite="false"] .favourite-toggle,
+                .girl-container[data-is-favourite="true"] .favourite-toggle {
+                    display: block;
+                }
+                .harem-girl-container[data-is-favourite="false"] .favourite-toggle,
+                .girl-container[data-is-favourite="false"] .favourite-toggle {
+                    background-image: url('${HHPlusPlus.Helpers.getCDNHost()}/design_v2/affstar_S.png');
+                    opacity: 0.7;
+                    filter: grayscale(1);
+                }
+                .harem-girl-container[data-is-favourite="true"] .favourite-toggle,
+                .girl-container[data-is-favourite="true"] .favourite-toggle {
+                    background-image: url('${HHPlusPlus.Helpers.getCDNHost()}/design_v2/affstar_S.png');
+                }
+                .girl-container.top7 img.girl-image {
+                    border-color: #ffb244 !important;
+                    box-shadow: 0px 0px 6px 3px #ffb244 !important;
+                }
+                .labyrinth-pool-select-panel .girl-container {
+                    /* the top7 glow is slightly cut off at the top */
+                    margin-top: 0.5rem;
+                    margin-bottom: -0.5rem;
+                }
+            `;
+            document.head.appendChild(sheet);
+        }
+
+        toggleFavorite(id) {
+            const fav = this.isFavorite(id);
+            if (fav) {
+                this.removeFavorite(id);
+            } else {
+                this.addFavorite(id);
+            }
+            return !fav;
+        }
+
+        removeFavorite(id) {
+            this.favoriteIds = this.favoriteIds.filter(e => e !== +id);
+            this.updateFavorites();
+        }
+
+        addFavorite(id) {
+            this.favoriteIds.push(+id);
+            this.updateFavorites();
+        }
+
+        isFavorite(id) {
+            return this.favoriteIds.includes(+id);
+        }
+
+        updateFavorites() {
+            localStorage.setItem(LS.labFavorites, JSON.stringify(this.favoriteIds));
+            log(this.favoriteIds);
+        }
+
+        prepareGirlElement(girl_element, idAttribute, top7 = null, girlList = null) {
+            const id = girl_element.getAttribute(idAttribute);
+            if (top7 && top7.includes(+id)) {
+                girl_element.classList.add('top7');
+            }
+            girl_element.setAttribute('data-is-favourite', this.isFavorite(id));
+            this.addToggleButton(girl_element, id, girlList);
+        }
+
+        addToggleButton(girl, id, girlList = null) {
+            if (girl.querySelector('.favourite-toggle')) { return; }
+            const toggle = this.toggle.clone()[0];
+            toggle.onclick = () => {
+                const isFav = this.toggleFavorite(id);
+                girl.setAttribute('data-is-favourite', isFav);
+                if (girlList) {
+                    setPower(this, girl, id, girlList);
+                }
+                $(document).trigger('updateFavorites');
+            };
+            girl.append(toggle);
+        }
     }
 
     /*
@@ -89,14 +213,34 @@
         PoVG();
     }
 
+    if (window.location.pathname === '/labyrinth-pool-select.html') {
+        /*
+         * - highlight top7 for lab generation and keep them at the top
+         * - favorite girls are ensured to be selected by auto-assign
+         */
+        labyrinthPoolSelect();
+    }
+
     if (window.location.pathname === '/labyrinth.html') {
         /*
+         * - squad tab
+         *   - highlight top7 for lab generation and keep them at the top
+         *   - mark favorite girls
          * - shop timer improvement
          *     tries to show when the next restock happens. it will be a little
          *     inaccurate if last restock was triggered on a different device,
          *     but it will show when the next restock happens at the latest
          */
         labyrinth();
+    }
+
+    if (window.location.pathname === '/edit-labyrinth-team.html') {
+        /*
+         * - favorite girls
+         *     sort them to the top preserving the order they were marked as
+         *     favorite, this allows auto-fill to quickly pick your favorite team
+         */
+        editLabyrinthTeam();
     }
 
     function girlPreview() {
@@ -315,7 +459,42 @@
         }, true);
     }
 
+    function labyrinthPoolSelect() {
+        HHPlusPlus.Helpers.doWhenSelectorAvailable('.labyrinth-pool-select-container .girl-grid', async () => {
+            const favorites = new FavoriteLabGirls();
+
+            $('.girl-grid .girl-container').each((i, girl) => {
+                setPower(favorites, girl, girl.getAttribute('id_girl'), owned_girls);
+            })
+
+            const top7 = getTop7(owned_girls);
+
+            await repeatOnChange('.labyrinth-pool-select-container .girl-grid', async () => {
+                $('.girl-grid .girl-container').each((i, girl) => {
+                    favorites.prepareGirlElement(girl, 'id_girl', top7, owned_girls);
+                })
+
+                moveTop7Up(top7, '.girl-grid .girl-container', 'id_girl');
+            }, true);
+        });
+    }
+
     function labyrinth() {
+        // favorites
+        HHPlusPlus.Helpers.doWhenSelectorAvailable('#squad_tab_container .squad-container .girl-grid', async () => {
+            const favorites = new FavoriteLabGirls();
+
+            const top7 = getTop7(girl_squad.map(girl => girl.member_girl));
+
+            await repeatOnChange('#squad_tab_container .squad-container', async () => {
+                $('.girl-grid .girl-container').each((i,girl) => {
+                    favorites.prepareGirlElement(girl, 'id', top7)
+                })
+
+                moveTop7Up(top7, '.girl-grid .girl-container', 'id');
+            }, true);
+        });
+
         // shop timer
         HHPlusPlus.Helpers.doWhenSelectorAvailable('#shop_tab_container .item-container .slot', async () => {
             let currentShopCycleEnd = updateCycleEnd();
@@ -447,6 +626,33 @@
         }
     }
 
+    function editLabyrinthTeam() {
+        HHPlusPlus.Helpers.doWhenSelectorAvailable('.harem-panel-girls', async () => {
+            const favorites = new FavoriteLabGirls();
+            $('.harem-panel-girls .harem-girl-container').each((i,girl) => {
+                favorites.prepareGirlElement(girl, 'id_girl');
+            })
+
+            $(document).on('updateFavorites', () => {
+                const nonFav = $(`.harem-panel-girls .harem-girl-container[data-is-favourite="false"]:not(.top7)`)[0];
+                if (nonFav) {
+                    for (const id of favorites.favoriteIds) {
+                        const fav = $(`.harem-panel-girls .harem-girl-container[id_girl=${id}]:not(.top7)`)[0];
+                        if (!fav) {
+                            continue;
+                        }
+                        fav.remove();
+                        nonFav.before(fav);
+                    }
+                }
+            });
+
+            await repeatOnChange('.harem-panel-girls', async () => {
+                $(document).trigger('updateFavorites');
+            }, true);
+        });
+    }
+
     function log(...args) {
         console.log('HH suckless:', ...args);
     }
@@ -458,6 +664,36 @@
         textArea.select();
         document.execCommand('copy');
         textArea.remove();
+    }
+
+    function getTop7(girlList) {
+        return girlList.map((girl) => { return {girl, power: powerCalc(girl.battle_caracs)}})
+            .sort((a, b) => b.power - a.power)
+            .slice(0,7)
+            .map(e => e.girl.id_girl);
+    }
+
+    function moveTop7Up(top7, containerSelector, idAttribute) {
+        const nonTop7 = $(`${containerSelector}:not(.top7)`)[0];
+        if (nonTop7) {
+            for (const id of top7) {
+                const t7 = $(`${containerSelector}[${idAttribute}=${id}]`)[0];
+                t7.remove();
+                nonTop7.before(t7);
+            }
+        }
+    }
+
+    function powerCalc(battle_caracs) {
+        // in case zoo's normalization is enabled the real power needs to be calculated again
+        const {damage, defense, ego, mana_starting, speed} = battle_caracs;
+        return Math.ceil(ego + 7.5 * (damage + defense) + 0.625 * speed + 0.1 * mana_starting);
+    }
+
+    function setPower(favorites, girlElement, id, girlList) {
+        girlList.find(e => e.id_girl === +id).power_display = favorites.isFavorite(id)
+            ? 1e7 // just a high number to ensure the favorites are picked by auto-assign
+            : +girlElement.querySelector('.girl-power-number').getAttribute('value');
     }
 
     async function runOnChange(selectors, func) {
