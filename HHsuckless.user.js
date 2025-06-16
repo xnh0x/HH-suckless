@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         HH suckless
-// @version      0.5
+// @version      0.6
 // @description  HH that sucks less. Requires HH++ BDSM and Rena's Battle Sim.
 // @author       xnh0x
 // @match        https://nutaku.haremheroes.com/*
