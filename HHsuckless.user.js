@@ -3,7 +3,11 @@
 // @version      0.6
 // @description  HH that sucks less. Requires HH++ BDSM and Rena's Battle Sim.
 // @author       xnh0x
+// @match        https://*.hentaiheroes.com/*
 // @match        https://nutaku.haremheroes.com/*
+// @match        https://*.comixharem.com/*
+// @match        https://*.pornstarharem.com/*
+// @match        https://*.gayharem.com/*
 // @run-at       document-idle
 // @namespace    https://github.com/xnh0x/HH-suckless
 // @updateURL    https://github.com/xnh0x/HH-suckless/raw/refs/heads/master/HHsuckless.user.js
