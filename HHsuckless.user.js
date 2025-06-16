@@ -238,7 +238,7 @@
         /*
          * - favorite girls
          *     sort them to the top preserving the order they were marked as
-         *     favorite, this allows auto-fill to quickly pick your favorite team
+         *     favorite, this allows autofill to quickly pick your favorite team
          */
         editLabyrinthTeam();
     }
