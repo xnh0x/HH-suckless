@@ -178,6 +178,15 @@ console.log(`HHsuckless: version: ${GM_info.script.version}`);
      */
     mainMenu();
 
+    if (window.location.pathname === '/home.html') {
+        /*
+         * - the automatic shop and news popup can fuck off forever
+         *     the "busy" carrot may still show up for a moment when
+         *     something would have popped up
+         */
+        home();
+    }
+
     if (window.location.pathname === '/season-arena.html') {
         /*
          * - swap the best opponent to the left
@@ -284,6 +293,23 @@ console.log(`HHsuckless: version: ${GM_info.script.version}`);
         HHPlusPlus.Helpers.doWhenSelectorAvailable('#contains_all > nav > [rel="content"] > div', () => {
             $('#contains_all > nav > [rel="content"] > div')[0].style.transition = 'none';
         })
+    }
+
+    function home() {
+        preventAutoPopup('.info-container .chest-container', '#shop-payment-tabs', '#common-popups close');
+        preventAutoPopup('#news_button', '#news_details_popup', '#common-popups close');
+
+        function preventAutoPopup(button, check, close) {
+            let manualClick = false;
+            $(button).on('click', () => {
+                manualClick = true;
+            });
+            HHPlusPlus.Helpers.doWhenSelectorAvailable(check, ()=>{
+                if (!manualClick) {
+                    $(close).trigger('click');
+                }
+            });
+        }
     }
 
     function seasonArena() {
