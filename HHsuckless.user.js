@@ -17,11 +17,20 @@
 // @grant        unsafeWindow
 // ==/UserScript==
 
-(async function () {
+console.log(`HHsuckless: version: ${GM_info.script.version}`);
+
+(async function suckless() {
     'use strict';
     /*global $,love_raids,GT,HHPlusPlus,girls_data_list*/
 
-    log(`version: ${GM_info.script.version}`);
+    if (!unsafeWindow.HHPlusPlus) {
+        log(`waiting for HHPlusPlus`);
+        $(document).one('hh++-bdsm:loaded', () => {
+            log('HHPlusPlus ready, restart script');
+            suckless();
+        });
+        return;
+    }
 
     const LS = {
         labFavorites: 'HHsucklessLabFavorites',
