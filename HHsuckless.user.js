@@ -297,14 +297,16 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function home() {
-        preventAutoPopup('.info-container .chest-container', '#shop-payment-tabs', '#common-popups close');
-        preventAutoPopup('#news_button', '#news_details_popup', '#common-popups close');
+        preventAutoPopup(['.info-container .chest-container', '.currency plus'], '#shop-payment-tabs', '#common-popups close');
+        preventAutoPopup(['#news_button'], '#news_details_popup', '#common-popups close');
 
-        function preventAutoPopup(button, check, close) {
+        function preventAutoPopup(manualButtons, check, close) {
             let manualClick = false;
-            $(button).on('click', () => {
-                manualClick = true;
-            });
+            for (const button of manualButtons) {
+                $(button).on('click', () => {
+                    manualClick = true;
+                });
+            }
             HHPlusPlus.Helpers.doWhenSelectorAvailable(check, ()=>{
                 if (!manualClick) {
                     $(close).trigger('click');
