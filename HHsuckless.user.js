@@ -18,6 +18,7 @@
 // ==/UserScript==
 
 console.log(`HHsuckless: version: ${GM_info.script.version}`);
+const local_now_ts = Math.floor(Date.now() / 1000);
 
 (async function suckless() {
     'use strict';
@@ -537,7 +538,7 @@ console.log(`HHsuckless: version: ${GM_info.script.version}`);
 
         // shop timer
         HHPlusPlus.Helpers.doWhenSelectorAvailable('#shop_tab_container .item-container .slot', async () => {
-            let currentShopCycleEnd = updateCycleEnd();
+            const currentShopCycleEnd = updateCycleEnd();
 
             await repeatOnChange('#shop_tab_container', setShopTimer, true);
 
@@ -552,7 +553,7 @@ console.log(`HHsuckless: version: ${GM_info.script.version}`);
             function setShopTimer() {
                 const timer = $('#shop_tab_container .shop-timer p')[0];
                 if (!timer) { return; }
-                const seconds = currentShopCycleEnd - Math.floor(Date.now() / 1000);
+                const seconds = currentShopCycleEnd - serverNow();
                 if (seconds > 0) {
                     const h = Math.floor(seconds / 3600);
                     const m = Math.floor((seconds % 3600) / 60);
@@ -561,14 +562,11 @@ console.log(`HHsuckless: version: ${GM_info.script.version}`);
                     timer.innerHTML = `${GT.design.market_new_stock}<span rel="expires">${timeString}</span>`;
                 } else {
                     // since the timer is the latest time that restocking happens it must have
-                    // happened now so the cycle end is forced to update and the stock is grayed
-                    // out until the shop is reopened
-                    currentShopCycleEnd = updateCycleEnd(true);
+                    // happened now so force a reload to prevent buying unknown items from the new stock
                     timer.innerHTML = 'Refresh!';
-                    $('.shop-section')[0].style.filter = 'grayscale(1)';
-                    // forget the current stock so opening the shop later won't incorrectly assume
-                    // another restocking has happened because the inventory changed
-                    localStorage.removeItem(LS.labShopStock);
+                    $('.shop-section .slot').css('filter', 'grayscale(1)');
+                    $('.blue_button_L.buy-item').attr('disabled', '');
+                    setTimeout(() => { window.location.reload(); }, 2500);
                 }
             }
 
@@ -578,7 +576,7 @@ console.log(`HHsuckless: version: ${GM_info.script.version}`);
 
                 const newShopCycleEnd = force || detectRestock() || (oldCycleEnd < server_now_ts)
                     ? Math.min(server_now_ts + cycle_end_in_seconds,  // shop will restock next reset
-                        Math.floor(Date.now() / 1000) + twelveHours)  // shop will restock in 12h
+                        serverNow() + twelveHours)  // shop will restock in 12h
                     : oldCycleEnd  // shop restock hasn't happened yet
                 localStorage.setItem(LS.labShopCycleEnd, newShopCycleEnd.toString());
                 return newShopCycleEnd;
@@ -695,6 +693,11 @@ console.log(`HHsuckless: version: ${GM_info.script.version}`);
 
     function log(...args) {
         console.log('HH suckless:', ...args);
+    }
+
+    function serverNow() {
+        const serverOffset = server_now_ts - local_now_ts;
+        return Math.floor(Date.now()/1000) + serverOffset;
     }
 
     function copyText(text) {
