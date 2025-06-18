@@ -293,7 +293,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     function mainMenu() {
         HHPlusPlus.Helpers.doWhenSelectorAvailable('#contains_all > nav > [rel="content"] > div', () => {
             $('#contains_all > nav > [rel="content"] > div')[0].style.transition = 'none';
-        })
+        });
     }
 
     function home() {
@@ -395,12 +395,12 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
         document.querySelectorAll('.raid-card').forEach((raidCard, i) => {
             if (!girls[i]) {
-                log('HH++ is missing info, scroll through whole harem to update!')
+                log('HH++ is missing info, scroll through whole harem to update!');
                 return;
             }
             const {name, shards, grade_offsets} = girls[i];
             const haremLink = HHPlusPlus.Helpers.getHref(`/characters/${love_raids[i].id_girl}`);
-            const wikiLink = HHPlusPlus.Helpers.getWikiLink(name, love_raids[i].id_girl, HHPlusPlus.I18n.getLang())
+            const wikiLink = HHPlusPlus.Helpers.getWikiLink(name, love_raids[i].id_girl, HHPlusPlus.I18n.getLang());
             const objectives = raidCard.querySelectorAll('.classic-girl');
             const girl = objectives[0];
             const skin = objectives[1];
@@ -427,7 +427,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     img.style.visibility = 'visible';
                     img.style.marginTop = `-${grade_offsets[0][0]/7}px`;
                 }
-            })
+            });
 
             // add go buttons if there aren't any
             addMissingGoButton(girl);
@@ -447,7 +447,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     }
                 }
             }
-        })
+        });
 
         // zoo's eye buttons are now obsolete
         document.querySelectorAll('.raid-card .eye').forEach(e => e.remove());
@@ -467,7 +467,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         HHPlusPlus.Helpers.doWhenSelectorAvailable('#background', () => {
             const bg = $('#background')[0];
             bg.src = bg.src.replace('800x450', '1600x900');
-        })
+        });
     }
 
     function waifu() {
@@ -485,7 +485,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         copyButton.addEventListener('click', copyGirls);
 
         function copyGirls() {
-            const text = girls_data_list.reduce((csv, girl) => {csv += `\n${girl.id_girl},${girl.grade_skins.length}`; return csv;}, 'id,skins');
+            const text = girls_data_list.reduce((csv, girl) => {
+                    csv += `\n${girl.id_girl},${girl.grade_skins.length}`;
+                    return csv;
+                }, 'id,skins');
             copyText(text);
         }
     }
@@ -506,14 +509,14 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
             $('.girl-grid .girl-container').each((i, girl) => {
                 setPower(favorites, girl, girl.getAttribute('id_girl'), owned_girls);
-            })
+            });
 
             const top7 = getTop7(owned_girls);
 
             await repeatOnChange('.labyrinth-pool-select-container .girl-grid', async () => {
                 $('.girl-grid .girl-container').each((i, girl) => {
                     favorites.prepareGirlElement(girl, 'id_girl', top7, owned_girls);
-                })
+                });
 
                 moveTop7Up(top7, '.girl-grid .girl-container', 'id_girl');
             }, true);
@@ -529,8 +532,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
             await repeatOnChange('#squad_tab_container .squad-container', async () => {
                 $('.girl-grid .girl-container').each((i,girl) => {
-                    favorites.prepareGirlElement(girl, 'id', top7)
-                })
+                    favorites.prepareGirlElement(girl, 'id', top7);
+                });
 
                 moveTop7Up(top7, '.girl-grid .girl-container', 'id');
             }, true);
@@ -577,7 +580,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 const newShopCycleEnd = force || detectRestock() || (oldCycleEnd < server_now_ts)
                     ? Math.min(server_now_ts + cycle_end_in_seconds,  // shop will restock next reset
                         serverNow() + twelveHours)  // shop will restock in 12h
-                    : oldCycleEnd  // shop restock hasn't happened yet
+                    : oldCycleEnd;  // shop restock hasn't happened yet
                 localStorage.setItem(LS.labShopCycleEnd, newShopCycleEnd.toString());
                 return newShopCycleEnd;
             }
@@ -600,7 +603,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         function updateStock() {
             const currentStock = Array.from($('#shop_tab_container .item-container .slot')).map(parseShopItem);
             if (currentStock.length === 0) {
-                log(`couldn't read inventory`)
+                log(`couldn't read inventory`);
                 return null;
             }
             localStorage.setItem(LS.labShopStock, JSON.stringify(currentStock));
@@ -659,7 +662,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 const itemId = item.getAttribute('id_item');
                 if (itemId) return `${itemId}`;
             }
-            log('lab shop item not parsed', item, item.className)
+            log('lab shop item not parsed', item, item.className);
             return item.className;
         }
     }
@@ -669,7 +672,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             const favorites = new FavoriteLabGirls();
             $('.harem-panel-girls .harem-girl-container').each((i,girl) => {
                 favorites.prepareGirlElement(girl, 'id_girl');
-            })
+            });
 
             $(document).on('updateFavorites', () => {
                 const nonFav = $(`.harem-panel-girls .harem-girl-container[data-is-favourite="false"]:not(.top7)`)[0];
