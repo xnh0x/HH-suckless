@@ -401,7 +401,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
             // add tooltip with date to start and end times
             let raidDate = (new Date(((love_raids[i].status === 'upcoming' ? love_raids[i].seconds_until_event_start : love_raids[i].seconds_until_event_end) + server_now_ts) * 1000));
-            $(raidCard).find('.raid-timer .raid-timer p').attr('tooltip', `${raidDate.toLocaleString(document.documentElement.lang.replace('_','-'), {'weekday':'long','hour':'numeric'})}`)
+            $(raidCard).find('.raid-timer .raid-timer p').attr('tooltip', `${raidDate.toLocaleString(document.documentElement.lang.replace('_','-'), {'weekday':'long','hour':'numeric'})}`);
 
             if (!girls[i]) {
                 log('HH++ is missing info, scroll through whole harem to update!');
