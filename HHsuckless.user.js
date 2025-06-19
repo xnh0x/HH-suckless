@@ -396,6 +396,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         // console.log(girls)
 
         document.querySelectorAll('.raid-card').forEach((raidCard, i) => {
+            // remove Kinkoid's grayscale so the expanded cards are colored again
+            raidCard.classList.remove('grey-overlay');
+
             if (!girls[i]) {
                 log('HH++ is missing info, scroll through whole harem to update!');
                 return;
