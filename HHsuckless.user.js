@@ -504,6 +504,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     function PoVG() {
         repeatOnChange('.potions-paths-progress-bar-tiers', () => {
+            if (+time_remaining < 23.5 * 60 * 60) { return; } // only hide until the contest starts on the last day
             const claimAll = $('.potions-paths-tier.unclaimed.claim-all-rewards')[0];
             if (claimAll) {
                 claimAll.classList.remove('claim-all-rewards');
