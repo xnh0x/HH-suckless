@@ -434,7 +434,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             raidCard.querySelectorAll('.girl-img').forEach((img) => {
                 if (img.style.visibility === 'hidden') {
                     img.style.visibility = 'visible';
-                    img.style.marginTop = `-${grade_offsets[0][0]/7}px`;
+                    if (grade_offsets.length) {
+                        img.style.marginTop = `-${grade_offsets[0][0]/7}px`;
+                    }
                 }
             });
 
