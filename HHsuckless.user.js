@@ -37,6 +37,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         labFavorites: 'HHsucklessLabFavorites',
         labShopCycleEnd: 'HHsucklessLabShopCycleEnd',
         labShopStock: 'HHsucklessLabShopStock',
+        popData: 'HHsucklessPopData',
     }
 
     class FavoriteLabGirls {
@@ -175,6 +176,11 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     pageReloadKey();
 
     /*
+     * - replace HH++ PoP bar
+     */
+    popTimerBar();
+
+    /*
      * - disable fade transition when opening the navigation menu
      */
     mainMenu();
@@ -288,6 +294,246 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 window.location.reload();
             }
         });
+    }
+
+    function popTimerBar() {
+        const $HHPPbar = $('a.script-pop-timer');
+        if (!$HHPPbar.length) {
+            // PoP not unlocked yet
+            return;
+        }
+        if (window.location.pathname === '/activities.html' && window.location.search.includes('&index')) {
+            const $claimButton = $('.pop_central_part button[rel="pop_claim"]');
+            log($claimButton[0])
+            $claimButton.on('click', () => {
+                let data = JSON.parse(localStorage.getItem(LS.popData));
+                data.times = data.times.filter((e) => e.id_places_of_power !== current_pop_data.id_places_of_power);
+                data.active = data.times.length;
+                data.inactive = data.unlocked - data.active;
+                current_pop_data.remaining_time = 0;
+                localStorage.setItem(LS.popData, JSON.stringify(data));
+            });
+        }
+        addPopCSS();
+        replacePopBar();
+        const popBarUpdater= setInterval(updatePopBar, 1000);
+        updatePopBar(true);
+
+        function updatePopData(firstRun = false) {
+            let data = JSON.parse(localStorage.getItem(LS.popData)) || {};
+            if (firstRun && window.location.pathname === '/activities.html') {
+                log('update from pop_data')
+                const popArr = Object.values(pop_data);
+                const times = popArr.reduce((acc, curr) => {
+                    if (curr.time_to_finish) {
+                        const {id_places_of_power, remaining_time, time_to_finish} = curr;
+                        const end_ts = server_now_ts + remaining_time;
+                        acc.push({id_places_of_power, end_ts, time_to_finish})
+                    }
+                    return acc;
+                }, []);
+                data = {
+                    unlocked: popArr.length,
+                    active: times.length,
+                    inactive: popArr.length - times.length,
+                    times: times.sort((a, b) => a.end_ts - b.end_ts),
+                    updated: false,
+                };
+                localStorage.setItem(LS.popData, JSON.stringify(data));
+            }
+
+            if (window.location.pathname === '/activities.html' && window.location.search.includes('&index')) {
+                const $progressBar = $('#pop_info .pop_central_part .hh_bar');
+                if (data.updated || $progressBar.css('display') === 'none') {
+                    return data;
+                }
+                log('update from current_pop_data')
+                if (current_pop_data.remaining_time === 0) {
+                    const {id_places_of_power, level_power, max_team_power} = current_pop_data;
+                    const $powerBar = $('#pop_info .pop_right_part .hh_bar');
+                    const frontWidth = parseFloat($powerBar.find('.frontbar').css('width'));
+                    const backWidth = parseFloat($powerBar.find('.backbar').css('width'))
+                        - 2 * parseFloat($powerBar.find('.backbar').css('border-width'));
+                    const teamPowerPercent = frontWidth / backWidth;
+                    const teamPower = max_team_power * teamPowerPercent;
+                    const time_to_finish = Math.ceil(level_power / teamPower * 60);
+                    const end_ts = serverNow() + time_to_finish;
+
+                    let times = data.times;
+                    log(JSON.stringify(times))
+                    const i = times.findIndex((e) => e.id_places_of_power === id_places_of_power);
+                    if (i >= 0) {
+                        times[i] = {id_places_of_power, end_ts, time_to_finish};
+                    } else {
+                        times.push({id_places_of_power, end_ts, time_to_finish});
+                    }
+                    data.active = times.length;
+                    data.inactive = data.unlocked - data.active;
+                    data.times = times.sort((a, b) => a.end_ts - b.end_ts);
+                    data.updated = true;
+                    log(data.times)
+                }
+                localStorage.setItem(LS.popData, JSON.stringify(data));
+            }
+            return data;
+        }
+
+        function replacePopBar() {
+            const href = HHPlusPlus.Helpers.getHref('/activities.html?tab=pop');
+            const $popBar = $(`
+                <div class="energy_counter" type="pop" id="canvas_pop">
+                    <div class="energy_counter_bar">
+                        <div class="energy_counter_icon">
+                            <span class="hudPop_mix_icn"></span>
+                        </div>
+                        <a href="${href}">
+                            <div class="bar-wrapper">
+                                <div class="bar red"></div>
+                                <div class="over">
+                                    <div class="energy_counter_amount">
+                                        <span finished=""></span>/<span rel="max"></span>
+                                    </div>
+                                    <span rel="increment_txt">+<span rel="increment"></span> in <span rel="time"></span></span>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>`);
+            $HHPPbar.removeAttr('tooltip');
+            $HHPPbar.remove();
+            $('#canvas_worship_energy').after($popBar);
+        }
+
+        function updatePopBar(firstRun = false) {
+            const popData = updatePopData(firstRun);
+            const $popBar = $('#canvas_pop');
+            if (!popData.unlocked) {
+                $popBar.find('.energy_counter_amount')[0].innerHTML = 'open PoP page';
+                $popBar.find('.over span[rel="increment_txt"]').css('display', 'none');
+                return;
+            }
+
+            const now = serverNow();
+            const running = popData.times.filter(t => t.end_ts > now);
+            const finished = popData.active - running.length;
+            let next = null;
+            let last = running.slice(-1)[0];
+            if (running.length) {
+                next = {};
+                next.totalDuration = running[0].time_to_finish;
+                next.remaining = running[0].end_ts - now;
+                next.elapsed = next.totalDuration - next.remaining;
+                next.increment = running.filter((e) => e.end_ts === running[0].end_ts).length;
+            }
+
+            $popBar.find('.energy_counter_amount span[finished]')[0].innerText = `${finished}`;
+            $popBar.find('.energy_counter_amount span[rel="max"]')[0].innerText = `${popData.active}`;
+            $popBar.find('.energy_counter_amount span[rel="max"]').css('color', popData.inactive ? '#ec0039' : 'unset');
+            if (next) {
+                $popBar.find('.bar.red').css('width', `${next.elapsed / next.totalDuration * 100}%`);
+                $popBar.find('.over span[rel="increment_txt"]').css('display', 'unset');
+                $popBar.find('.over span[rel="increment"]')[0].innerText = `${next.increment}`;
+                $popBar.find('.over span[rel="time"]')[0].innerText = `${formatTime(next.remaining)}`;
+                $popBar.find('.hudPop_mix_icn').attr('tooltip',
+                    `Ready in <span class="orange" rel="timer">${formatTime(last.end_ts - now)}</span>`
+                    + `<br>Ready at <span class="orange">${(new Date(last.end_ts * 1000)).toLocaleString(HHPlusPlus.I18n.getLang(), {'hour':'numeric', 'minute':'numeric'})}</span>`);
+            } else {
+                $popBar.find('.bar.red').css('width', '100%');
+                $popBar.find('.over span[rel="increment_txt"]').css('display', 'none');
+                $popBar.find('.hudPop_mix_icn').attr('tooltip', '<span class="orange">Ready</span>');
+                if (!(window.location.pathname === '/activities.html' && window.location.search.includes('&index'))) {
+                    // pop data can't change on the current page so there is no need to keep updating
+                    clearInterval(popBarUpdater);
+                }
+            }
+        }
+
+        function addPopCSS() {
+            let sheet = document.createElement("style");
+            sheet.textContent = `
+                body>div#contains_all>header>div.energy_counter .energy_counter_icon span.hudPop_mix_icn {
+                    height: 24px;
+                    width: 24px;
+                    background-size: contain;
+                    background-position: center;
+                    background-repeat: no-repeat;
+                    background-image: url(https://hh.hh-content.com/pictures/gallery/18/200x/379e7b87f856f75d6016f0242415d028.webp);
+                    filter: drop-shadow(0px 2px 0px #000000bf);
+                    left: -126px;
+                    top: 21px;
+                }
+                body>div#contains_all>header>div.energy_counter[type=pop] .bar-wrapper {
+                    width: 114px;
+                    height: 16px;
+                    margin-left: -114px;
+                    margin-top: 24px;
+                }
+                body>div#contains_all>header>div.energy_counter[type=pop] .bar-wrapper .bar:after {
+                    left: 3px;
+                }
+                body>div#contains_all>header>div.energy_counter[type=pop] .bar-wrapper .over .energy_counter_amount {
+                    font-size: 8px;
+                }
+                body>div#contains_all>header>div.energy_counter[type=pop] .bar-wrapper .over span[finished] {
+                    font-size: 12px;
+                    line-height: 16px;
+                }
+                body>div#contains_all>header>div.energy_counter[type=pop] .bar-wrapper .over span {
+                    font-size: 8px;
+                }
+                body>div#contains_all>header>div.energy_counter[type=pop] .bar-wrapper .over [rel=increment_txt] {
+                    font-size: 8px;
+                    color: #8ec3ff;
+                }
+                body>div#contains_all>header>div.energy_counter[type=pop] .bar-wrapper .over [rel=increment],
+                body>div#contains_all>header>div.energy_counter[type=pop] .bar-wrapper .over [rel=time] {
+                    font-size: 9px;
+                    line-height: 12px;
+                    color: #8ec3ff;
+                }
+                @media (min-width: 1026px) {
+                    body>div#contains_all>header>div.energy_counter[type=pop] .bar-wrapper .over {
+                        justify-content: space-between;
+                    }
+                    body>div#contains_all>header>div.energy_counter[type=pop] .bar-wrapper .over .energy_counter_amount {
+                        margin-left: 14px;
+                    }
+                }
+                @media (max-width: 1025px) {
+                    body>div#contains_all>header div.energy_counter .energy_counter_icon span.hudPop_mix_icn {
+                        left: -122px;
+                        top: 37px;
+                    }
+                    body>div#contains_all>header>div.energy_counter[type=pop] .bar-wrapper {
+                        height: 26px;
+                        margin-top: 36px;
+                    }
+                    body>div#contains_all>header>div.energy_counter[type=pop] .bar-wrapper .bar:after {
+                        left: -2px;
+                        width: calc(100% + 9px);
+                    }
+                    body>div#contains_all>header div.energy_counter[type=pop] .bar-wrapper .over {
+                        flex-direction: row;
+                        justify-content: space-between;
+                        margin-left: 14px;
+                    }
+                    body>div#contains_all>header>div.energy_counter[type=pop] .bar-wrapper .over span[finished] {
+                        font-size: 16px;
+                    }
+                    body>div#contains_all>header>div.energy_counter[type=pop] .bar-wrapper .over [rel=increment_txt],
+                    body>div#contains_all>header>div.energy_counter[type=pop] .bar-wrapper .over [rel=increment] {
+                        line-height: 9px;
+                        letter-spacing: 0.1px;
+                    }
+                    body>div#contains_all>header>div.energy_counter[type=pop] .bar-wrapper .over [rel=time] {
+                        letter-spacing: 0.1px;
+                        font-size: 10px;
+                        line-height: 9px;
+                    }
+                }
+            `;
+            document.head.appendChild(sheet);
+        }
     }
 
     function mainMenu() {
@@ -708,6 +954,30 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     function log(...args) {
         console.log('HH suckless:', ...args);
+    }
+
+    function formatTime(seconds) {
+        const days = Math.floor(seconds / 60 / 60 / 24);
+        const d = days + 'd';
+
+        const hours = Math.floor(seconds / 60 / 60) % 24;
+        const h = hours + 'h';
+
+        const minutes = Math.floor(seconds / 60) % 60;
+        const m = minutes + 'm';
+
+        const secs = Math.floor(seconds) % 60;
+        const s = secs + 's';
+
+        if (days > 0) {
+            return `${d} ${h}`;
+        } else if (hours > 0) {
+            return `${h} ${m}`;
+        } else if (minutes > 0) {
+            return `${m} ${s}`;
+        } else {
+            return s;
+        }
     }
 
     function serverNow() {
