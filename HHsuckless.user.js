@@ -204,6 +204,51 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         home();
     }
 
+    if (window.location.pathname === '/troll-pre-battle.html') {
+        /*
+         * - 'space' key starts single fight
+         */
+        if (CONFIG.villain.enabled) {
+            trollPreBattle();
+        }
+    }
+
+    if (window.location.pathname === '/troll-battle.html') {
+        /*
+         * - 'space' key skips fight and reward popup
+         */
+        if (CONFIG.villain.enabled) {
+            trollBattle();
+        }
+    }
+
+    if (window.location.pathname === '/pantheon.html') {
+        /*
+         * - 'space' key enters floor
+         */
+        if (CONFIG.pantheon.enabled) {
+            pantheon();
+        }
+    }
+
+    if (window.location.pathname === '/pantheon-pre-battle.html') {
+        /*
+         * - 'space' key starts single fight
+         */
+        if (CONFIG.pantheon.enabled) {
+            pantheonPreBattle();
+        }
+    }
+
+    if (window.location.pathname === '/pantheon-battle.html') {
+        /*
+         * - 'space' key skips fight and reward popup
+         */
+        if (CONFIG.villain.enabled) {
+            pantheonBattle();
+        }
+    }
+
     if (window.location.pathname === '/season-arena.html') {
         /*
          * - swap the best opponent to the left
@@ -589,6 +634,41 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
     }
 
+    function trollPreBattle() {
+        // space key starts single battle
+        document.addEventListener('keydown', (e) => {
+            if (e.key === ' ') {
+                document.querySelector(`.battle-buttons .single-battle-button`).click();
+            }
+        });
+    }
+
+    function trollBattle() {
+        skipBattle();
+    }
+
+    function pantheon() {
+        // space key enters floor
+        document.addEventListener('keydown', (e) => {
+            if (e.key === ' ') {
+                document.querySelector(`#pantheon_tab_container .pantheon-pre-battle-btn`).click();
+            }
+        });
+    }
+
+    function pantheonPreBattle() {
+        // space key starts single battle
+        document.addEventListener('keydown', (e) => {
+            if (e.key === ' ') {
+                document.querySelector(`.battle-buttons .pantheon-single-battle-button`).click();
+            }
+        });
+    }
+
+    function pantheonBattle() {
+        skipBattle();
+    }
+
     function seasonArena() {
         const observer = new MutationObserver(async () => {
             if (document.querySelectorAll('.sim-chance').length === 3) {
@@ -650,6 +730,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function seasonBattle() {
+        skipBattle();
+    }
+
+    function skipBattle() {
         // space key skips battle, a second press accepts the results
         document.addEventListener('keydown', (e) => {
             if (e.key === ' ') {
@@ -1087,6 +1171,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 { enabled: true },
             raid:
                 { enabled: true },
+            villain:
+                { enabled: true },
+            pantheon:
+                { enabled: true },
             season:
                 { enabled: true },
             lab:
@@ -1189,6 +1277,36 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             },
         });
         config.raid.enabled = false;
+
+        hhPlusPlusConfig.registerModule({
+            group: 'suckless',
+            configSchema: {
+                baseKey: 'villain',
+                label: 'improved villain fights',
+                default: true,
+            },
+            run() {
+                config.villain = {
+                    enabled: true,
+                };
+            },
+        });
+        config.villain.enabled = false;
+
+        hhPlusPlusConfig.registerModule({
+            group: 'suckless',
+            configSchema: {
+                baseKey: 'pantheon',
+                label: 'improved pantheon fights',
+                default: true,
+            },
+            run() {
+                config.pantheon = {
+                    enabled: true,
+                };
+            },
+        });
+        config.pantheon.enabled = false;
 
         hhPlusPlusConfig.registerModule({
             group: 'suckless',
