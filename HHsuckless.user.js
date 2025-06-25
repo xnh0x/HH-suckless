@@ -22,9 +22,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
 (async function suckless() {
     'use strict';
-    /*global $,love_raids,GT,HHPlusPlus,girls_data_list*/
+    /*global $,love_raids,GT,HHPlusPlus,hhPlusPlusConfig,girls_data_list*/
 
-    if (!unsafeWindow.HHPlusPlus) {
+    if (!unsafeWindow.hhPlusPlusConfig) {
         log(`waiting for HHPlusPlus`);
         $(document).one('hh++-bdsm:loaded', () => {
             log('HHPlusPlus ready, restart script');
@@ -32,6 +32,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
         return;
     }
+
+    const CONFIG = loadConfig();
+
+    log('config:', CONFIG);
 
     const LS = {
         labFavorites: 'HHsucklessLabFavorites',
@@ -167,18 +171,24 @@ const local_now_ts = Math.floor(Date.now() / 1000);
      * - removes blur and lock icon from locked poses in the previews for girls
      * - fixes img src for unlocked scenes
      */
-    girlPreview();
+    if (CONFIG.girlPreview.enabled) {
+        girlPreview();
+    }
 
     /*
      * - 'R' key shortcut to reload current page since an actual reload
      *     by the browser puts you back to town
      */
-    pageReloadKey();
+    if (CONFIG.reload.enabled) {
+        pageReloadKey();
+    }
 
     /*
      * - replace HH++ PoP bar
      */
-    popTimerBar();
+    if (CONFIG.pop.enabled) {
+        popTimerBar();
+    }
 
     /*
      * - disable fade transition when opening the navigation menu
@@ -201,14 +211,18 @@ const local_now_ts = Math.floor(Date.now() / 1000);
          * - 'space' key starts fight against the best opponent
          * - '1', '2', '3' keys start battles against the three opponents
          */
-        seasonArena();
+        if (CONFIG.season.enabled) {
+            seasonArena();
+        }
     }
 
     if (window.location.pathname === '/season-battle.html') {
         /*
          * - 'space' key skips fight and reward popup
          */
-        seasonBattle();
+        if (CONFIG.season.enabled) {
+            seasonBattle();
+        }
     }
 
     if (window.location.pathname === '/love-raids.html') {
@@ -218,14 +232,18 @@ const local_now_ts = Math.floor(Date.now() / 1000);
          * - adds wiki links to the orange names
          * - makes go buttons link to harem if you already own the girl
          */
-        await loveRaids();
+        if (CONFIG.raid.enabled) {
+            await loveRaids();
+        }
     }
 
     if (window.location.pathname.includes('/quest/')) {
         /*
          * - switch scene resolution from 800x450 to 1600x900
          */
-        quest();
+        if (CONFIG.quest.enabled) {
+            quest();
+        }
     }
 
     if (window.location.pathname === '/waifu.html') {
@@ -240,7 +258,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         /*
          * - remove claim all
          */
-        PoVG();
+        if (CONFIG.pov.enabled) {
+            PoVG();
+        }
     }
 
     if (window.location.pathname === '/labyrinth-pool-select.html') {
@@ -248,7 +268,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
          * - highlight top7 for lab generation and keep them at the top
          * - favorite girls are ensured to be selected by auto-assign
          */
-        labyrinthPoolSelect();
+        if (CONFIG.lab.enabled) {
+            labyrinthPoolSelect();
+        }
     }
 
     if (window.location.pathname === '/labyrinth.html') {
@@ -261,7 +283,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
          *     inaccurate if last restock was triggered on a different device,
          *     but it will show when the next restock happens at the latest
          */
-        labyrinth();
+        if (CONFIG.lab.enabled) {
+            labyrinth();
+        }
     }
 
     if (window.location.pathname === '/edit-labyrinth-team.html') {
@@ -270,7 +294,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
          *     sort them to the top preserving the order they were marked as
          *     favorite, this allows autofill to quickly pick your favorite team
          */
-        editLabyrinthTeam();
+        if (CONFIG.lab.enabled) {
+            editLabyrinthTeam();
+        }
     }
 
     function girlPreview() {
@@ -543,8 +569,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function home() {
-        preventAutoPopup(['.info-container .chest-container', '.currency plus', '#mc-selector'], '#shop-payment-tabs', '#common-popups close');
-        preventAutoPopup(['#news_button'], '#news_details_popup', '#common-popups close');
+        if (CONFIG.news.enabled) {
+            preventAutoPopup(['.info-container .chest-container', '.currency plus', '#mc-selector'], '#shop-payment-tabs', '#common-popups close');
+            preventAutoPopup(['#news_button'], '#news_details_popup', '#common-popups close');
+        }
 
         function preventAutoPopup(manualButtons, check, close) {
             let manualClick = false;
@@ -1042,5 +1070,174 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             await func();
         }
         observer.observe(document.querySelector(selectors), {childList: true, subtree: true});
+    }
+
+    function loadConfig() {
+        // defaults
+        let config = {
+            reload:
+                { enabled: true },
+            news:
+                { enabled: false },
+            pop:
+                { enabled: false },
+            girlPreview:
+                { enabled: true },
+            quest:
+                { enabled: true },
+            raid:
+                { enabled: true },
+            season:
+                { enabled: true },
+            lab:
+                { enabled: true },
+            pov:
+                { enabled: true },
+        };
+
+        hhPlusPlusConfig.registerGroup({
+            key: 'suckless',
+            name: 'suckless'
+        });
+
+        hhPlusPlusConfig.registerModule({
+            group: 'suckless',
+            configSchema: {
+                baseKey: 'reload',
+                label: 'R key reloads current page',
+                default: true,
+            },
+            run() {
+                config.reload = {
+                    enabled: true,
+                };
+            },
+        });
+        config.pop.enabled = false;
+
+        hhPlusPlusConfig.registerModule({
+            group: 'suckless',
+            configSchema: {
+                baseKey: 'news',
+                label: 'prevent news and shop popup',
+                default: false,
+            },
+            run() {
+                config.news = {
+                    enabled: true,
+                };
+            },
+        });
+        config.news.enabled = false;
+
+        hhPlusPlusConfig.registerModule({
+            group: 'suckless',
+            configSchema: {
+                baseKey: 'pop',
+                label: 'restyle pop bar',
+                default: false,
+            },
+            run() {
+                config.pop = {
+                    enabled: true,
+                };
+            },
+        });
+        config.pop.enabled = false;
+
+        hhPlusPlusConfig.registerModule({
+            group: 'suckless',
+            configSchema: {
+                baseKey: 'girlPreview',
+                label: 'unblur girl preview',
+                default: true,
+            },
+            run() {
+                config.girlPreview = {
+                    enabled: true,
+                };
+            },
+        });
+        config.girlPreview.enabled = false;
+
+        hhPlusPlusConfig.registerModule({
+            group: 'suckless',
+            configSchema: {
+                baseKey: 'quest',
+                label: 'high resolution scenes',
+                default: true,
+            },
+            run() {
+                config.quest = {
+                    enabled: true,
+                };
+            },
+        });
+        config.quest.enabled = false;
+
+        hhPlusPlusConfig.registerModule({
+            group: 'suckless',
+            configSchema: {
+                baseKey: 'raid',
+                label: 'additional raid card tweaks',
+                default: true,
+            },
+            run() {
+                config.raid = {
+                    enabled: true,
+                };
+            },
+        });
+        config.raid.enabled = false;
+
+        hhPlusPlusConfig.registerModule({
+            group: 'suckless',
+            configSchema: {
+                baseKey: 'season',
+                label: 'improved season fights (requires Rena\'s sim)',
+                default: true,
+            },
+            run() {
+                config.season = {
+                    enabled: true,
+                };
+            },
+        });
+        config.season.enabled = false;
+
+        hhPlusPlusConfig.registerModule({
+            group: 'suckless',
+            configSchema: {
+                baseKey: 'lab',
+                label: 'improved labyrinth',
+                default: true,
+            },
+            run() {
+                config.lab = {
+                    enabled: true,
+                };
+            },
+        });
+        config.lab.enabled = false;
+
+        hhPlusPlusConfig.registerModule({
+            group: 'suckless',
+            configSchema: {
+                baseKey: 'pov',
+                label: 'hide PoV/PoG claim all until the last day',
+                default: true,
+            },
+            run() {
+                config.pov = {
+                    enabled: true,
+                };
+            },
+        });
+        config.pov.enabled = false;
+
+        hhPlusPlusConfig.loadConfig();
+        hhPlusPlusConfig.runModules();
+
+        return config;
     }
 })();
