@@ -558,9 +558,11 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 }
                 body>div#contains_all>header>div.energy_counter[type=pop] .bar-wrapper .over [rel=increment],
                 body>div#contains_all>header>div.energy_counter[type=pop] .bar-wrapper .over [rel=time] {
-                    font-size: 9px;
                     line-height: 12px;
                     color: #8ec3ff;
+                }
+                body>div#contains_all>header>div.energy_counter[type=pop] .bar-wrapper .over [rel=time] {
+                    font-size: 9px;
                 }
                 @media (min-width: 1026px) {
                     body>div#contains_all>header>div.energy_counter[type=pop] .bar-wrapper .over {
