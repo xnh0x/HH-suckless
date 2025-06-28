@@ -530,7 +530,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     background-repeat: no-repeat;
                     background-image: url(https://hh.hh-content.com/pictures/gallery/18/200x/379e7b87f856f75d6016f0242415d028.webp);
                     filter: drop-shadow(0px 2px 0px #000000bf);
-                    left: -126px;
+                    left: -124px;
                     top: 21px;
                 }
                 body>div#contains_all>header>div.energy_counter[type=pop] .bar-wrapper {
@@ -574,7 +574,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 }
                 @media (max-width: 1025px) {
                     body>div#contains_all>header div.energy_counter .energy_counter_icon span.hudPop_mix_icn {
-                        left: -122px;
+                        left: -121px;
                         top: 37px;
                     }
                     body>div#contains_all>header>div.energy_counter[type=pop] .bar-wrapper {
