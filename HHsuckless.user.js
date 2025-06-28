@@ -855,9 +855,12 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
         function copyGirls() {
             const text = girls_data_list.reduce((csv, girl) => {
-                    csv += `\n${girl.id_girl},${girl.grade_skins.length}`;
-                    return csv;
-                }, 'id,skins');
+                const ownedSkins = girl.preview.grade_skins_data.reduce((owned, skin) => {
+                    return owned + skin.is_owned;
+                }, 0);
+                csv += `${girl.id_girl},${ownedSkins}\n`;
+                return csv;
+            }, 'id,skins\n');
             copyText(text);
         }
     }
