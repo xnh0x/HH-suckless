@@ -344,6 +344,15 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
     }
 
+    if (window.location.pathname === '/edit-team.html') {
+        /*
+         * - fill team from list
+         */
+        if (CONFIG.editTeam.enabled) {
+            await editTeam();
+        }
+    }
+
     function girlPreview() {
         let sheet = document.createElement("style");
         sheet.textContent = [
@@ -1069,6 +1078,25 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
     }
 
+    async function editTeam() {
+        const dict = await HHPlusPlus.Helpers.getGirlDictionary();
+        const $input = $('<input type="text" id="team_list" placeholder="Team list" style="text-align:center;">');
+        const $setButton = $('<button id="set-team" class="blue_button_L">Set Team</button>');
+        const $clearButton = $('#clear-team');
+
+        $clearButton.before($input);
+        $clearButton.before($setButton);
+
+        $setButton.on('click', ()=>{
+            $clearButton.trigger('click');
+            const girls = JSON.parse(`[${$input.val()}]`);
+            const ids = girls.map(name => dict.keys().find(k => dict.get(k).name===name));
+            ids.forEach(id => {
+                $(`.harem-girl-container[id_girl=${id}]`).trigger('click');
+            });
+        });
+    }
+
     function log(...args) {
         console.log('HH suckless:', ...args);
     }
@@ -1184,6 +1212,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 { enabled: true },
             lab:
                 { enabled: true },
+            editTeam:
+                { enabled: false },
             pov:
                 { enabled: true },
         };
@@ -1342,6 +1372,21 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             },
         });
         config.lab.enabled = false;
+
+        hhPlusPlusConfig.registerModule({
+            group: 'suckless',
+            configSchema: {
+                baseKey: 'editTeam',
+                label: 'improved team edit',
+                default: false,
+            },
+            run() {
+                config.editTeam = {
+                    enabled: true,
+                };
+            },
+        });
+        config.editTeam.enabled = false;
 
         hhPlusPlusConfig.registerModule({
             group: 'suckless',
