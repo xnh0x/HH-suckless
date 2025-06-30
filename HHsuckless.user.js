@@ -384,7 +384,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
         if (window.location.pathname === '/activities.html' && window.location.search.includes('&index')) {
             const $claimButton = $('.pop_central_part button[rel="pop_claim"]');
-            log($claimButton[0])
             $claimButton.on('click', () => {
                 let data = JSON.parse(localStorage.getItem(LS.popData));
                 data.times = data.times.filter((e) => e.id_places_of_power !== current_pop_data.id_places_of_power);
@@ -402,7 +401,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         function updatePopData(firstRun = false) {
             let data = JSON.parse(localStorage.getItem(LS.popData)) || {};
             if (firstRun && window.location.pathname === '/activities.html') {
-                log('update from pop_data')
                 const popArr = Object.values(pop_data);
                 const times = popArr.reduce((acc, curr) => {
                     if (curr.time_to_finish) {
@@ -427,7 +425,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 if (data.updated || $progressBar.css('display') === 'none') {
                     return data;
                 }
-                log('update from current_pop_data')
                 if (current_pop_data.remaining_time === 0) {
                     const {id_places_of_power, level_power, max_team_power} = current_pop_data;
                     const $powerBar = $('#pop_info .pop_right_part .hh_bar');
@@ -440,7 +437,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     const end_ts = serverNow() + time_to_finish;
 
                     let times = data.times;
-                    log(JSON.stringify(times))
                     const i = times.findIndex((e) => e.id_places_of_power === id_places_of_power);
                     if (i >= 0) {
                         times[i] = {id_places_of_power, end_ts, time_to_finish};
@@ -451,7 +447,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     data.inactive = data.unlocked - data.active;
                     data.times = times.sort((a, b) => a.end_ts - b.end_ts);
                     data.updated = true;
-                    log(data.times)
                 }
                 localStorage.setItem(LS.popData, JSON.stringify(data));
             }
@@ -479,7 +474,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                         </a>
                     </div>
                 </div>`);
-            $HHPPbar.removeAttr('tooltip');
             $HHPPbar.remove();
             $('#canvas_worship_energy').after($popBar);
         }
