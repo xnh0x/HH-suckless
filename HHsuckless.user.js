@@ -187,7 +187,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
      * - replace HH++ PoP bar
      */
     if (CONFIG.pop.enabled) {
-        popTimerBar();
+        HHPlusPlus.Helpers.doWhenSelectorAvailable('a.script-pop-timer', popTimerBar);
     }
 
     /*
@@ -377,11 +377,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function popTimerBar() {
-        const $HHPPbar = $('a.script-pop-timer');
-        if (!$HHPPbar.length) {
-            // PoP not unlocked yet
-            return;
-        }
         if (window.location.pathname === '/activities.html' && window.location.search.includes('&index')) {
             const $claimButton = $('.pop_central_part button[rel="pop_claim"]');
             $claimButton.on('click', () => {
@@ -397,61 +392,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         replacePopBar();
         const popBarUpdater= setInterval(updatePopBar, 1000);
         updatePopBar(true);
-
-        function updatePopData(firstRun = false) {
-            let data = JSON.parse(localStorage.getItem(LS.popData)) || {};
-            if (firstRun && window.location.pathname === '/activities.html') {
-                const popArr = Object.values(pop_data);
-                const times = popArr.reduce((acc, curr) => {
-                    if (curr.time_to_finish) {
-                        const {id_places_of_power, remaining_time, time_to_finish} = curr;
-                        const end_ts = server_now_ts + remaining_time;
-                        acc.push({id_places_of_power, end_ts, time_to_finish})
-                    }
-                    return acc;
-                }, []);
-                data = {
-                    unlocked: popArr.length,
-                    active: times.length,
-                    inactive: popArr.length - times.length,
-                    times: times.sort((a, b) => a.end_ts - b.end_ts),
-                    updated: false,
-                };
-                localStorage.setItem(LS.popData, JSON.stringify(data));
-            }
-
-            if (window.location.pathname === '/activities.html' && window.location.search.includes('&index')) {
-                const $progressBar = $('#pop_info .pop_central_part .hh_bar');
-                if (data.updated || $progressBar.css('display') === 'none') {
-                    return data;
-                }
-                if (current_pop_data.remaining_time === 0) {
-                    const {id_places_of_power, level_power, max_team_power} = current_pop_data;
-                    const $powerBar = $('#pop_info .pop_right_part .hh_bar');
-                    const frontWidth = parseFloat($powerBar.find('.frontbar').css('width'));
-                    const backWidth = parseFloat($powerBar.find('.backbar').css('width'))
-                        - 2 * parseFloat($powerBar.find('.backbar').css('border-width'));
-                    const teamPowerPercent = frontWidth / backWidth;
-                    const teamPower = max_team_power * teamPowerPercent;
-                    const time_to_finish = Math.ceil(level_power / teamPower * 60);
-                    const end_ts = serverNow() + time_to_finish;
-
-                    let times = data.times;
-                    const i = times.findIndex((e) => e.id_places_of_power === id_places_of_power);
-                    if (i >= 0) {
-                        times[i] = {id_places_of_power, end_ts, time_to_finish};
-                    } else {
-                        times.push({id_places_of_power, end_ts, time_to_finish});
-                    }
-                    data.active = times.length;
-                    data.inactive = data.unlocked - data.active;
-                    data.times = times.sort((a, b) => a.end_ts - b.end_ts);
-                    data.updated = true;
-                }
-                localStorage.setItem(LS.popData, JSON.stringify(data));
-            }
-            return data;
-        }
 
         function replacePopBar() {
             const href = HHPlusPlus.Helpers.getHref('/activities.html?tab=pop');
@@ -474,14 +414,14 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                         </a>
                     </div>
                 </div>`);
-            $HHPPbar.remove();
+            $('a.script-pop-timer').remove();
             $('#canvas_worship_energy').after($popBar);
         }
 
         function updatePopBar(firstRun = false) {
             const popData = updatePopData(firstRun);
             const $popBar = $('#canvas_pop');
-            if (!popData.unlocked) {
+            if ($.isEmptyObject(popData)) {
                 $popBar.find('.energy_counter_amount')[0].innerHTML = 'open PoP page';
                 $popBar.find('.over span[rel="increment_txt"]').css('display', 'none');
                 return;
@@ -522,7 +462,66 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             }
         }
 
+        function updatePopData(firstRun = false) {
+            let data = JSON.parse(localStorage.getItem(LS.popData)) || {};
+            if (firstRun && window.location.pathname === '/activities.html') {
+                const popArr = Object.values(pop_data);
+                const times = popArr.reduce((acc, curr) => {
+                    if (curr.time_to_finish) {
+                        const {id_places_of_power, remaining_time, time_to_finish} = curr;
+                        const end_ts = server_now_ts + remaining_time;
+                        acc.push({id_places_of_power, end_ts, time_to_finish})
+                    }
+                    return acc;
+                }, []);
+                data = {
+                    unlocked: popArr.length,
+                    active: times.length,
+                    inactive: popArr.length - times.length,
+                    times: times.sort((a, b) => a.end_ts - b.end_ts),
+                    updated: false,
+                };
+                localStorage.setItem(LS.popData, JSON.stringify(data));
+            }
+
+            if (window.location.pathname === '/activities.html' && window.location.search.includes('&index')) {
+                const $progressBar = $('#pop_info .pop_central_part .hh_bar');
+                if (data.updated || $progressBar.css('display') === 'none') {
+                    return data;
+                }
+                if (current_pop_data.remaining_time === 0) {
+                    // when manually starting, neither current_pop_data nor pop_data is updated until you
+                    // reload the activity page, so the end and duration is calculated here. otherwise
+                    // the script wouldn't have any data on the last PoP if you just leave the activity page
+                    const {id_places_of_power, level_power, max_team_power} = current_pop_data;
+                    const $powerBar = $('#pop_info .pop_right_part .hh_bar');
+                    const frontWidth = parseFloat($powerBar.find('.frontbar').css('width'));
+                    const backWidth = parseFloat($powerBar.find('.backbar').css('width'))
+                        - 2 * parseFloat($powerBar.find('.backbar').css('border-width'));
+                    const teamPowerPercent = frontWidth / backWidth;
+                    const teamPower = max_team_power * teamPowerPercent;
+                    const time_to_finish = Math.ceil(level_power / teamPower * 60);
+                    const end_ts = serverNow() + time_to_finish;
+
+                    let times = data.times;
+                    const i = times.findIndex((e) => e.id_places_of_power === id_places_of_power);
+                    if (i >= 0) {
+                        times[i] = {id_places_of_power, end_ts, time_to_finish};
+                    } else {
+                        times.push({id_places_of_power, end_ts, time_to_finish});
+                    }
+                    data.active = times.length;
+                    data.inactive = data.unlocked - data.active;
+                    data.times = times.sort((a, b) => a.end_ts - b.end_ts);
+                    data.updated = true;
+                }
+                localStorage.setItem(LS.popData, JSON.stringify(data));
+            }
+            return data;
+        }
+
         function addPopCSS() {
+            // pretty much 1 to 1 copied from the other bar's styles
             let sheet = document.createElement("style");
             sheet.textContent = `
                 body>div#contains_all>header>div.energy_counter .energy_counter_icon span.hudPop_mix_icn {
