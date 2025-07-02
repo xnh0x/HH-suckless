@@ -205,6 +205,15 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         home();
     }
 
+    if (window.location.pathname === '/club-champion.html') {
+        /*
+         * - fade out non know-how girls for farming
+         */
+        if (CONFIG.champ.enabled) {
+            clubChampion();
+        }
+    }
+
     if (window.location.pathname === '/troll-pre-battle.html') {
         /*
          * - 'space' key starts single fight
@@ -636,6 +645,25 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     $(close).trigger('click');
                 }
             });
+        }
+    }
+
+    function clubChampion() {
+        fadeOutDraft();
+
+        function fadeOutDraft() {
+            let sheet = document.createElement("style");
+            sheet.textContent = `
+                .girl-selection__girl-box:has(> div > span[carac="1"]),
+                .girl-selection__girl-box:has(> div > span[carac="carac1"]),
+                .girl-selection__girl-box:has(> div > span[carac="class1"]),
+                .girl-selection__girl-box:has(> div > span[carac="2"]),
+                .girl-selection__girl-box:has(> div > span[carac="carac2"]),
+                .girl-selection__girl-box:has(> div > span[carac="class2"]) {
+                    filter: grayscale(0.5) opacity(0.5);
+                }
+            `;
+            document.head.appendChild(sheet);
         }
     }
 
@@ -1212,6 +1240,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 { enabled: true },
             raid:
                 { enabled: true },
+            champ:
+                { enabled: false },
             villain:
                 { enabled: true },
             pantheon:
@@ -1320,6 +1350,21 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             },
         });
         config.raid.enabled = false;
+
+        hhPlusPlusConfig.registerModule({
+            group: 'suckless',
+            configSchema: {
+                baseKey: 'champ',
+                label: 'fade out non know-how girls in club champ draft',
+                default: false,
+            },
+            run() {
+                config.champ = {
+                    enabled: true,
+                };
+            },
+        });
+        config.champ.enabled = false;
 
         hhPlusPlusConfig.registerModule({
             group: 'suckless',
