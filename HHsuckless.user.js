@@ -24,6 +24,14 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     'use strict';
     /*global $,love_raids,GT,HHPlusPlus,hhPlusPlusConfig,girls_data_list*/
 
+    const LS = {
+        labFavorites: 'HHsucklessLabFavorites',
+        labShopCycleEnd: 'HHsucklessLabShopCycleEnd',
+        labShopStock: 'HHsucklessLabShopStock',
+        popData: 'HHsucklessPopData',
+        seasonChanceThreshold: 'HHsucklessSeasonChanceThreshold',
+    }
+
     if (!unsafeWindow.hhPlusPlusConfig) {
         log(`waiting for HHPlusPlus`);
         $(document).one('hh++-bdsm:loaded', () => {
@@ -36,13 +44,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     const CONFIG = loadConfig();
 
     log('config:', CONFIG);
-
-    const LS = {
-        labFavorites: 'HHsucklessLabFavorites',
-        labShopCycleEnd: 'HHsucklessLabShopCycleEnd',
-        labShopStock: 'HHsucklessLabShopStock',
-        popData: 'HHsucklessPopData',
-    }
 
     class FavoriteLabGirls {
         constructor() {
@@ -701,7 +702,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
         function sortOpponents() {
             const cls = {main:'.sim-chance', tie:'.sim-mojo'};
-            // cls = {main:'.sim-mojo', tie:'.sim-chance'}; // in case the highest expected mojo is preferred
             const mainCriterion = Array.from(document.querySelectorAll(cls.main)).map((el) => parseFloat(el.innerText));
             const tieBreaker = Array.from(document.querySelectorAll(cls.tie)).map((el) => parseFloat(el.innerText));
             if (mainCriterion.length < 3 || tieBreaker.length < 3) {
@@ -722,11 +722,13 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             }
 
             // space key starts battle against the best opponent
-            document.addEventListener('keydown', (e) => {
-                if (e.key === ' ') {
-                    bestOpponent.querySelector(`.green_button_L.btn_season_perform`).click();
-                }
-            });
+            if (!(CONFIG.season.useThreshold && mainCriterion[best] < CONFIG.season.threshold)) {
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === ' ') {
+                        bestOpponent.querySelector(`.green_button_L.btn_season_perform`).click();
+                    }
+                });
+            }
             log('opponents sorted');
 
             return true;
@@ -1215,7 +1217,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             pantheon:
                 { enabled: true },
             season:
-                { enabled: true },
+                { enabled: true, useThreshold: false, threshold: 100 },
             lab:
                 { enabled: true },
             editTeam:
@@ -1355,14 +1357,33 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 baseKey: 'season',
                 label: 'improved season fights (requires Rena\'s sim)',
                 default: true,
+                subSettings: [
+                    { key: 'useThreshold', default: false,
+                        label: `disable space bar when chance is below <span><input type="text" id="season-threshold-input" placeholder="" style="text-align: center; height: 1rem; width: 2rem;">%</span>`,
+                    },
+                ],
             },
-            run() {
+            run(subSettings) {
                 config.season = {
                     enabled: true,
+                    useThreshold: subSettings.useThreshold,
+                    threshold: parseFloat(localStorage.getItem(LS.seasonChanceThreshold) ?? '100'),
                 };
             },
         });
         config.season.enabled = false;
+
+        HHPlusPlus.Helpers.doWhenSelectorAvailable('#season-threshold-input', () => {
+            const $input = $('#season-threshold-input');
+            let threshold = parseFloat(localStorage.getItem(LS.seasonChanceThreshold) ?? '100');
+            $input.val(threshold.toString());
+            $input.on('focusout', () => {
+                const input = parseFloat($input.val());
+                threshold = isNaN(input) ? 0 : Math.min(100, Math.max(0, input));
+                localStorage.setItem(LS.seasonChanceThreshold, threshold.toString());
+                $input.val(threshold.toString());
+            });
+        });
 
         hhPlusPlusConfig.registerModule({
             group: 'suckless',
