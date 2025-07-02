@@ -1066,19 +1066,40 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     async function editTeam() {
         const dict = await HHPlusPlus.Helpers.getGirlDictionary();
         const $input = $('<input type="text" id="team_list" placeholder="Team list" style="text-align:center;">');
-        const $setButton = $('<button id="set-team" class="blue_button_L">Set Team</button>');
+        const $setButton = $('<button id="set-team" class="blue_button_L">Get Team</button>');
         const $clearButton = $('#clear-team');
 
         $clearButton.before($input);
         $clearButton.before($setButton);
 
+        $input.on('input', ()=>{
+            if (!$input.val()) {
+                $setButton.text('Get Team');
+            } else {
+                $setButton.text('Set Team');
+            }
+        });
+
         $setButton.on('click', ()=>{
-            $clearButton.trigger('click');
-            const girls = JSON.parse(`[${$input.val()}]`);
-            const ids = girls.map(name => dict.keys().find(k => dict.get(k).name===name));
-            ids.forEach(id => {
-                $(`.harem-girl-container[id_girl=${id}]`).trigger('click');
-            });
+            if (!$input.val()) {
+                let names = [];
+                $('.team-member-container').each((i, e) => {
+                    const j = $(e).attr('data-team-member-position');
+                    const id = $(e).attr('data-girl-id');
+                    if (!id) { return; }
+                    const name = dict.get(id).name;
+                    names[j] = `"${name}"`;
+                });
+                $input.val(names.join(', '));
+                $input.trigger('input');
+            } else {
+                $clearButton.trigger('click');
+                const girls = JSON.parse(`[${$input.val()}]`);
+                const ids = girls.map(name => dict.keys().find(k => dict.get(k).name===name));
+                ids.forEach(id => {
+                    $(`.harem-girl-container[id_girl=${id}]`).trigger('click');
+                });
+            }
         });
     }
 
