@@ -1387,7 +1387,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             : +girlElement.querySelector('.girl-power-number').getAttribute('value');
     }
 
-    async function runOnChange(selectors, func) {
+    function runOnChange(selectors, func) {
         const observer = new MutationObserver(async () => {
             observer.disconnect();
             await func();
