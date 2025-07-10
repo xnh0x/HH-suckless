@@ -854,14 +854,21 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     function skipBattle() {
         // space key skips battle, a second press accepts the results
-        document.addEventListener('keydown', (e) => {
+        $(document).on('keydown', (e) => {
             if (e.key === ' ') {
-                const skipButton = document.querySelector('#new-battle-skip-btn');
-                const rewardConfirm = document.querySelector('#rewards_popup .popup_buttons .blue_button_L');
-                if (rewardConfirm) {
-                    rewardConfirm.click();
-                } else {
-                    skipButton?.click();
+                const $claimGirlButton = $('#claim-reward');
+                if ($claimGirlButton.length) {
+                    $claimGirlButton.trigger('click');
+                    return;
+                }
+                const $okButton = $('#rewards_popup button.blue_button_L[close_callback]');
+                if ($okButton.length) {
+                    $okButton.trigger('click');
+                    return;
+                }
+                const $skipButton = $('#new-battle-skip-btn');
+                if ($skipButton.length) {
+                    $skipButton.trigger('click');
                 }
             }
         });
