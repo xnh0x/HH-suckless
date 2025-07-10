@@ -1372,7 +1372,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 };
             },
         });
-        config.pop.enabled = false;
+        config.reload.enabled = false;
 
         hhPlusPlusConfig.registerModule({
             group: 'suckless',
