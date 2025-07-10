@@ -899,9 +899,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             leftImage.src = `${HHPlusPlus.Helpers.getCDNHost()}/pictures/girls/${love_raids[i].id_girl}/ava0.png`;
             if (raidCard.classList.contains('multiple-girl')) {
                 const rightImage = raidCard.querySelector('.girl-img.right');
-                // there is no good way to tell which skin it will be so this will always show the first
-                // it'll be a while until girls will get a second skin anyway
                 if (!rightImage.src.includes('grade_skins')) {
+                    // there is no good way to tell which skin it will be so this will always show the first
                     rightImage.src = `${HHPlusPlus.Helpers.getCDNHost()}/pictures/girls/${love_raids[i].id_girl}/grade_skins/grade_skin1.png`;
                 }
             }
