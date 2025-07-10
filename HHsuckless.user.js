@@ -188,7 +188,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     /*
      * - replace HH++ PoP bar
      */
-    if (CONFIG.pop.enabled) {
+    if (CONFIG.activities.popBar) {
         HHPlusPlus.Helpers.doWhenSelectorAvailable('a.script-pop-timer', popTimerBar);
     }
 
@@ -212,6 +212,19 @@ const local_now_ts = Math.floor(Date.now() / 1000);
          */
         if (CONFIG.champ.enabled) {
             clubChampion();
+        }
+    }
+
+    if (window.location.pathname === '/activities.html') {
+        /*
+         * - Places of Power 'space' key:
+         *     - collect reward
+         *     - assign
+         *     - start
+         *     - go to next pop
+         */
+        if (CONFIG.activities.enabled) {
+            activities();
         }
     }
 
@@ -672,6 +685,70 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 }
             `;
             document.head.appendChild(sheet);
+        }
+    }
+
+    function activities() {
+        if (CONFIG.activities.popShortcuts) {
+            if (window.location.search.includes('&index')) {
+                popAssign();
+            } else {
+                popCollect();
+            }
+        }
+
+        function popCollect() {
+            document.addEventListener('keydown', (e) => {
+                if (!window.location.search.includes('tab=pop')) {
+                    return;
+                }
+                if (e.key === ' ') {
+                    const $claimGirlButton = $('#claim-reward');
+                    if ($claimGirlButton.length) {
+                        $claimGirlButton.trigger('click');
+                        return;
+                    }
+                    const $okButton = $('#rewards_popup button.blue_button_L[confirm_blue_button]');
+                    if ($okButton.length) {
+                        $okButton.trigger('click');
+                        return;
+                    }
+                    const $claimButtons = $('button.purple_button_L[rel=pop_thumb_claim][style!="display:none"]');
+                    if ($claimButtons.length) {
+                        if (!$claimButtons.first().attr('disabled')) {
+                            $claimButtons.first().trigger('click');
+                        }
+                        return;
+                    }
+                    const $visitButtons = $('button.blue_button_L[rel=pop_thumb_info][style!="display:none"]');
+                    $visitButtons.first().trigger('click');
+                }
+            });
+        }
+
+        function popAssign() {
+            let quickNavOnce = true;
+            document.addEventListener('keydown', (e) => {
+                if (!window.location.search.includes('tab=pop')) {
+                    return;
+                }
+                if (e.key === ' ') {
+                    const $assignButton = $('.pop-quick-nav button[rel=pop_auto_assign]');
+                    if (!$assignButton.attr('disabled')) {
+                        $assignButton.trigger('click');
+                        return;
+                    }
+                    const $startButton = $('.pop_central_part button[rel=pop_action]');
+                    if (!$startButton.attr('disabled')) {
+                        $startButton.trigger('click');
+                        return;
+                    }
+                    if (quickNavOnce) {
+                        quickNavOnce = false;
+                        $('.pop-quick-nav a .pop-quick-nav-next').trigger('click');
+                    }
+                }
+            });
         }
     }
 
@@ -1330,8 +1407,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 { enabled: true },
             news:
                 { enabled: false },
-            pop:
-                { enabled: false },
+            activities:
+                { enabled: false, popBar: false, popShortcuts: false },
             girlPreview:
                 { enabled: true },
             quest:
@@ -1392,21 +1469,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         hhPlusPlusConfig.registerModule({
             group: 'suckless',
             configSchema: {
-                baseKey: 'pop',
-                label: 'restyle pop bar',
-                default: false,
-            },
-            run() {
-                config.pop = {
-                    enabled: true,
-                };
-            },
-        });
-        config.pop.enabled = false;
-
-        hhPlusPlusConfig.registerModule({
-            group: 'suckless',
-            configSchema: {
                 baseKey: 'girlPreview',
                 label: 'unblur girl preview',
                 default: true,
@@ -1463,6 +1525,31 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             },
         });
         config.champ.enabled = false;
+
+        hhPlusPlusConfig.registerModule({
+            group: 'suckless',
+            configSchema: {
+                baseKey: 'activities',
+                label: 'improved activities',
+                default: false,
+                subSettings: [
+                    { key: 'popBar', default: false,
+                        label: 'restyle PoP bar',
+                    },
+                    { key: 'popShortcuts', default: false,
+                        label: 'PoP space key shortcuts',
+                    },
+                ],
+            },
+            run(subSettings) {
+                config.activities = {
+                    enabled: true,
+                    popBar: subSettings.popBar,
+                    popShortcuts: subSettings.popShortcuts,
+                };
+            },
+        });
+        config.activities.enabled = false;
 
         hhPlusPlusConfig.registerModule({
             group: 'suckless',
