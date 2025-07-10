@@ -30,6 +30,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         labShopStock: 'HHsucklessLabShopStock',
         popData: 'HHsucklessPopData',
         seasonChanceThreshold: 'HHsucklessSeasonChanceThreshold',
+        seasonal: 'HHsucklessSeasonal',
     }
 
     if (!unsafeWindow.hhPlusPlusConfig) {
@@ -290,6 +291,13 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         if (CONFIG.raid.enabled) {
             await loveRaids();
         }
+    }
+
+    if (window.location.pathname === '/seasonal.html') {
+        /*
+         * - add confirmation to open ranking tabs if there are rewards to claim
+         */
+        seasonal();
     }
 
     if (window.location.pathname.includes('/quest/')) {
@@ -854,6 +862,96 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 button.classList.add('redirect_button', 'blue_button_L');
                 button.innerText = 'Go';
                 e.querySelector('.shards-container').appendChild(button);
+            }
+        }
+    }
+
+    function seasonal() {
+        const type = getType();
+        if (type === undefined) {
+            log(`can't tell ME type`);
+            return;
+        }
+
+        let seasonalData = JSON.parse(localStorage.getItem(LS.seasonal) ?? '{}');
+        if (seasonalData.type !== type || server_now_ts > seasonalData.seasonalEnd) {
+            seasonalData = { type: type, new: true }
+        }
+
+        if (type === 0) {
+            // seasonalEvent();
+        } else if (type === 1) {
+            // hotAssembly();
+        } else if (type === 2) {
+            lustyRace();
+        }
+        localStorage.setItem(LS.seasonal, JSON.stringify(seasonalData));
+
+        function getType() {
+            if (unsafeWindow.mega_tiers_data
+                && mega_tiers_data.length === 100
+                && mega_tiers_data[99].potions_required === 30000) {
+                // lusty race
+                return 2;
+            }
+            return undefined;
+        }
+
+        // function seasonalEvent() { }
+
+        // function hotAssembly() { }
+
+        function lustyRace() {
+            if (seasonalData.new) {
+                seasonalData = { type: 2, new: false,
+                    seasonalEnd: server_now_ts + mega_event_time_remaining,
+                    rankingEnd: null, rankingRewards: false,
+                };
+            }
+
+            if (seasonalData.rankingEnd === null
+                // just in case the page is reloaded on the ranking tabs
+                || window.location.search.includes('tab=top_ranking_tab_container')
+                || window.location.search.includes('tab=event_ranking_tab_container')) {
+                seasonalData.rankingRewards = false;
+                HHPlusPlus.Helpers.doWhenSelectorAvailable('.ranking-timer.timer', () => {
+                    seasonalData.rankingEnd = Math.round((serverNow() + parseInt($('.ranking-timer.timer').attr('data-time-stamp'))) / 100) * 100;
+                    localStorage.setItem(LS.seasonal, JSON.stringify(seasonalData));
+                });
+            } else {
+                if (serverNow() > seasonalData.rankingEnd) {
+                    seasonalData.rankingEnd += 3 * 24 * 60;
+                    seasonalData.rankingRewards = true;
+                }
+            }
+
+            if (seasonalData.rankingRewards) {
+                const $topChest = $('#top_ranking_tab .collect_notif');
+                const $eventChest = $('#event_ranking_tab .collect_notif');
+                $topChest.css('display', '');
+                $eventChest.css('display', '');
+
+                addRewardConfirmation('top_ranking_tab');
+                addRewardConfirmation('event_ranking_tab');
+
+                function addRewardConfirmation(tabId) {
+                    $(`#${tabId}`).wrapInner(`<div id="${tabId}_confirm" class="claim-confirmation"></div>`);
+                    $(`#${tabId}_confirm`).on('click', (e) => {
+                        if (confirm('opening ranking tab will claim rewards')) {
+                            rewardsClaimed();
+                        } else {
+                            e.stopPropagation();
+                        }
+                    });
+                }
+
+                function rewardsClaimed() {
+                    seasonalData.rankingRewards = false;
+                    localStorage.setItem(LS.seasonal, JSON.stringify(seasonalData));
+                    $('#mega-event-tabs .claim-confirmation').off('click');
+                    $topChest.css('display', 'none');
+                    $eventChest.css('display', 'none');
+                }
             }
         }
     }
