@@ -997,16 +997,18 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 || window.location.search.includes('tab=top_ranking_tab_container')
                 || window.location.search.includes('tab=event_ranking_tab_container')) {
                 seasonalData.rankingRewards = false;
-                HHPlusPlus.Helpers.doWhenSelectorAvailable('.ranking-timer.timer', () => {
-                    seasonalData.rankingEnd = Math.round((serverNow() + parseInt($('.ranking-timer.timer').attr('data-time-stamp'))) / 100) * 100;
-                    localStorage.setItem(LS.seasonal, JSON.stringify(seasonalData));
-                });
             } else {
                 if (serverNow() > seasonalData.rankingEnd) {
-                    seasonalData.rankingEnd += 3 * 24 * 60;
+                    // the next ranking will end three days after the last one
+                    seasonalData.rankingEnd += 3 * 24 * 60 * 60;
                     seasonalData.rankingRewards = true;
                 }
             }
+
+            HHPlusPlus.Helpers.doWhenSelectorAvailable('.ranking-timer.timer', () => {
+                seasonalData.rankingEnd = Math.round((serverNow() + parseInt($('.ranking-timer.timer').attr('data-time-stamp'))) / 100) * 100;
+                localStorage.setItem(LS.seasonal, JSON.stringify(seasonalData));
+            });
 
             if (seasonalData.rankingRewards) {
                 const $topChest = $('#top_ranking_tab .collect_notif');
