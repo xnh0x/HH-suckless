@@ -985,6 +985,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         // function hotAssembly() { }
 
         function lustyRace() {
+
+            addLRCSS();
+
             if (seasonalData.new) {
                 seasonalData = { type: 2, new: false,
                     seasonalEnd: server_now_ts + mega_event_time_remaining,
@@ -1013,8 +1016,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             if (seasonalData.rankingRewards) {
                 const $topChest = $('#top_ranking_tab .collect_notif');
                 const $eventChest = $('#event_ranking_tab .collect_notif');
-                $topChest.css('display', '');
-                $eventChest.css('display', '');
+                $topChest.addClass('show-chest');
+                $eventChest.addClass('show-chest');
 
                 addRewardConfirmation('top_ranking_tab');
                 addRewardConfirmation('event_ranking_tab');
@@ -1034,9 +1037,19 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     seasonalData.rankingRewards = false;
                     localStorage.setItem(LS.seasonal, JSON.stringify(seasonalData));
                     $('#mega-event-tabs .claim-confirmation').off('click');
-                    $topChest.css('display', 'none');
-                    $eventChest.css('display', 'none');
+                    $topChest.removeClass('show-chest');
+                    $eventChest.removeClass('show-chest');
                 }
+            }
+
+            function addLRCSS() {
+                let sheet = document.createElement("style");
+                sheet.textContent = `
+                        #mega-event-tabs .collect_notif.show-chest {
+                            display: unset !important;
+                        }
+                    `;
+                document.head.appendChild(sheet);
             }
         }
     }
