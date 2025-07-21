@@ -17,7 +17,7 @@
 // @grant        unsafeWindow
 // ==/UserScript==
 
-console.log(`HHsuckless: version: ${GM_info.script.version}`);
+console.log(`HH suckless: version: ${GM_info.script.version}`);
 const local_now_ts = Math.floor(Date.now() / 1000);
 
 (async function suckless() {
@@ -420,9 +420,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             });
         }
         addPopCSS();
-        replacePopBar();
-        const popBarUpdater= setInterval(updatePopBar, 1000);
-        updatePopBar(true);
+
+        const popBarUpdater = setInterval(updatePopBar, 1000);
+        HHPlusPlus.Helpers.doWhenSelectorAvailable('#canvas_worship_energy', replacePopBar);
 
         function replacePopBar() {
             const href = HHPlusPlus.Helpers.getHref('/activities.html?tab=pop');
@@ -447,6 +447,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 </div>`);
             $('a.script-pop-timer').remove();
             $('#canvas_worship_energy').after($popBar);
+            updatePopBar(true);
         }
 
         function updatePopBar(firstRun = false) {
