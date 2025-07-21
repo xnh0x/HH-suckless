@@ -202,6 +202,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
          * - the automatic shop and news popup can fuck off forever
          *     the "busy" carrot may still show up for a moment when
          *     something would have popped up
+         * - add ranking timer and reward chest for LR
          */
         home();
     }
@@ -653,6 +654,64 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         if (CONFIG.news.enabled) {
             preventAutoPopup(['.info-container .chest-container', '.currency plus', '#mc-selector'], '#shop-payment-tabs', '#common-popups close');
             preventAutoPopup(['#news_button'], '#news_details_popup', '#common-popups close');
+        }
+
+        addSeasonalInfo();
+
+        function addSeasonalInfo() {
+            let seasonalData = JSON.parse(localStorage.getItem(LS.seasonal) ?? '{}');
+            if (seasonalData.type === undefined || serverNow() > seasonalData.seasonalEnd) {
+                return;
+            }
+
+            if (seasonalData.type === 0) {
+                // seasonal event
+            } else if (seasonalData.type === 1) {
+                // hot assembly
+            } else if (seasonalData.type === 2) {
+                lustyRace();
+            }
+
+            function lustyRace() {
+                if (!seasonalData.rankingEnd) {
+                    return;
+                }
+
+                if (serverNow() > seasonalData.rankingEnd) {
+                    // the next ranking will end three days after the last one
+                    seasonalData.rankingEnd += 3 * 24 * 60 * 60;
+                    seasonalData.rankingRewards = true;
+                    localStorage.setItem(LS.seasonal, JSON.stringify(seasonalData));
+                }
+
+                const $megaEvent = $(`div.over[rel="mega-event"]`);
+
+                if (seasonalData.rankingRewards) {
+                    $megaEvent.append(`
+                        <span class="button-notification-icon button-notification-reward" 
+                            style="top: unset; right: unset; bottom: 0; left: 0;"></span>
+                    `);
+                }
+
+                if (seasonalData.rankingEnd >= seasonalData.seasonalEnd) {
+                    // there is no ranking in the last days of the event
+                    return;
+                }
+
+                $megaEvent.append(`
+                    <div class="mega-event-timer timer">
+                        <p>${GT.design.event_ranking} ${GT.design.ends_in}
+                            <span id="ranking_timer" rel="expires"></span>
+                        </p>
+                    </div>
+                `);
+
+                const handler = () => {
+                    $('#ranking_timer').text(`${formatTime(seasonalData.rankingEnd - serverNow())}`);
+                };
+                handler();
+                setInterval(handler, 1000);
+            }
         }
 
         function preventAutoPopup(manualButtons, check, close) {
