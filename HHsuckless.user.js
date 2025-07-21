@@ -31,6 +31,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         popData: 'HHsucklessPopData',
         seasonChanceThreshold: 'HHsucklessSeasonChanceThreshold',
         seasonal: 'HHsucklessSeasonal',
+        pov: 'HHsucklessPoV',
+        pog: 'HHsucklessPoG',
     }
 
     if (!unsafeWindow.hhPlusPlusConfig) {
@@ -202,6 +204,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
          * - the automatic shop and news popup can fuck off forever
          *     the "busy" carrot may still show up for a moment when
          *     something would have popped up
+         * - add PoV/PoG timers
          * - add ranking timer and reward chest for LR
          */
         home();
@@ -330,14 +333,26 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         waifu();
     }
 
-    if (window.location.pathname === '/path-of-valor.html'
-        || window.location.pathname === '/path-of-glory.html') {
+    if (window.location.pathname === '/path-of-valor.html') {
         /*
          * - remove claim all
          */
         if (CONFIG.pov.enabled) {
-            PoVG();
+            PoV();
         }
+        // save end time stamp for home page timer
+        localStorage.setItem(LS.pov, `${server_now_ts + (+time_remaining)}`);
+    }
+
+    if (window.location.pathname === '/path-of-glory.html') {
+        /*
+         * - remove claim all
+         */
+        if (CONFIG.pog.enabled) {
+            PoV();
+        }
+        // save end time stamp for home page timer
+        localStorage.setItem(LS.pog, `${server_now_ts + (+time_remaining)}`);
     }
 
     if (window.location.pathname === '/labyrinth-pool-select.html') {
@@ -656,7 +671,35 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             preventAutoPopup(['#news_button'], '#news_details_popup', '#common-popups close');
         }
 
+        if (CONFIG.pov.enabled) {
+            addPovTimer(LS.pov, 'path-of-valor', 'pov_timer', 14 * 24 * 60 * 60)
+        }
+
+        if (CONFIG.pog.enabled) {
+            addPovTimer(LS.pog, 'path-of-glory', 'pog_timer', 35 * 24 * 60 * 60)
+        }
+
         addSeasonalInfo();
+
+        function addPovTimer(storageKey, rel, id, increment) {
+            let end_ts = localStorage.getItem(storageKey);
+            if (end_ts) {
+                if (serverNow() > end_ts) {
+                    end_ts = +end_ts + increment;
+                    localStorage.setItem(storageKey, `${end_ts}`);
+                }
+
+                $(`a[rel="${rel}"] .pov-widget .white_text`).prepend(`
+                    <span style="position: absolute; left: 6px; color: #8EC3FF;">${capitalize(GT.design.ends_in)} <span id="${id}" ></span></span>
+                `);
+
+                const handler = () => {
+                    $(`#${id}`).text(`${formatTime(end_ts - serverNow())}`);
+                };
+                handler();
+                return setTimeout(handler, 1000);
+            }
+        }
 
         function addSeasonalInfo() {
             let seasonalData = JSON.parse(localStorage.getItem(LS.seasonal) ?? '{}');
@@ -1147,7 +1190,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
     }
 
-    function PoVG() {
+    function PoV() {
         repeatOnChange('.potions-paths-progress-bar-tiers', () => {
             if (+time_remaining < 23.5 * 60 * 60) { return; } // only hide until the contest starts on the last day
             const claimAll = $('.potions-paths-tier.unclaimed.claim-all-rewards')[0];
@@ -1393,6 +1436,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         console.log('HH suckless:', ...args);
     }
 
+    function capitalize(val) {
+        return val.charAt(0).toUpperCase() + val.slice(1);
+    }
+
     function formatTime(seconds) {
         const days = Math.floor(seconds / 60 / 60 / 24);
         const d = days + 'd';
@@ -1509,6 +1556,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             editTeam:
                 { enabled: false },
             pov:
+                { enabled: true },
+            pog:
                 { enabled: true },
         };
 
@@ -1737,9 +1786,13 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 config.pov = {
                     enabled: true,
                 };
+                config.pog = {
+                    enabled: true,
+                };
             },
         });
         config.pov.enabled = false;
+        config.pog.enabled = false;
 
         hhPlusPlusConfig.loadConfig();
         hhPlusPlusConfig.runModules();
