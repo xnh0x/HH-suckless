@@ -688,10 +688,20 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     end_ts = +end_ts + increment;
                     localStorage.setItem(storageKey, `${end_ts}`);
                 }
-
-                $(`a[rel="${rel}"] .pov-widget .white_text`).prepend(`
-                    <span style="position: absolute; left: 6px; color: #8EC3FF;">${capitalize(GT.design.ends_in)} <span id="${id}" ></span></span>
+                // position: absolute; left: 6px; bottom: 14px;
+                const $potionText = $(`a[rel="${rel}"] .pov-widget .white_text`);
+                const $potionsBar = $(`a[rel="${rel}"] .pov-widget .pov-tier-bar`);
+                const $timer = $(`
+                    <span style="color: #8EC3FF;">${capitalize(GT.design.ends_in)} <span id="${id}" ></span>
+                    </span>
                 `);
+                if (!$(`.potions-paths-buttons`).length) {
+                    $timer.appendTo($potionText).css({ position: 'absolute', left: '6px' })
+                } else {
+                    // HH++ legacy layout
+                    $potionText.after($timer).detach().appendTo($potionsBar)
+                        .css({ position: 'absolute', right: '0px', bottom: '-5px', 'text-shadow': '1px 1px 0 #000' });
+                }
 
                 const handler = () => {
                     $(`#${id}`).text(`${formatTime(end_ts - serverNow())}`);
