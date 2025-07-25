@@ -210,6 +210,15 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         home();
     }
 
+    if (window.location.pathname === '/champions-map.html') {
+        /*
+         * - hide raid cards to prevent accidental navigation
+         */
+        if (CONFIG.champ.enabled) {
+            championsMap();
+        }
+    }
+
     if (window.location.pathname === '/club-champion.html') {
         /*
          * - fade out non know-how girls for farming
@@ -782,8 +791,26 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
     }
 
+    function championsMap() {
+        if (CONFIG.champ.noRaid) {
+            hideRaidCards();
+        }
+
+        function hideRaidCards() {
+            let sheet = document.createElement("style");
+            sheet.textContent = `
+                .love-raid-container {
+                    display: none;
+                }
+            `;
+            document.head.appendChild(sheet);
+        }
+    }
+
     function clubChampion() {
-        fadeOutDraft();
+        if (CONFIG.champ.fade) {
+            fadeOutDraft();
+        }
 
         function fadeOutDraft() {
             let sheet = document.createElement("style");
@@ -1554,7 +1581,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             raid:
                 { enabled: true },
             champ:
-                { enabled: false },
+                { enabled: false, fade: false, noRaid: false },
             villain:
                 { enabled: true },
             pantheon:
@@ -1655,12 +1682,22 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             group: 'suckless',
             configSchema: {
                 baseKey: 'champ',
-                label: 'fade out non know-how girls in club champ draft',
+                label: 'champion tweaks',
                 default: false,
+                subSettings: [
+                    { key: 'fade', default: false,
+                        label: 'fade out non know-how girls in club champ draft',
+                    },
+                    { key: 'noRaid', default: false,
+                        label: 'hide raid cards',
+                    },
+                ],
             },
-            run() {
+            run(subSettings) {
                 config.champ = {
                     enabled: true,
+                    fade: subSettings.fade,
+                    noRaid: subSettings.noRaid,
                 };
             },
         });
