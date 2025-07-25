@@ -691,12 +691,13 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         addSeasonalInfo();
 
         function addPovTimer(storageKey, rel, id, increment) {
-            let end_ts = localStorage.getItem(storageKey);
+            let end_ts = +localStorage.getItem(storageKey);
             if (end_ts) {
-                if (serverNow() > end_ts) {
-                    end_ts = +end_ts + increment;
-                    localStorage.setItem(storageKey, `${end_ts}`);
+                while (serverNow() > end_ts) {
+                    // if a device hasn't been used in a while it might be more than one path out of date
+                    end_ts += increment;
                 }
+                localStorage.setItem(storageKey, `${end_ts}`);
                 // position: absolute; left: 6px; bottom: 14px;
                 const $potionText = $(`a[rel="${rel}"] .pov-widget .white_text`);
                 const $potionsBar = $(`a[rel="${rel}"] .pov-widget .pov-tier-bar`);
