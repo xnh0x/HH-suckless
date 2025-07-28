@@ -389,7 +389,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
     }
 
-    if (window.location.pathname === '/edit-labyrinth-team.html') {
+    if (window.location.pathname === '/edit-labyrinth-team.html'
+        || window.location.pathname === '/edit-world-boss-team.html') {
         /*
          * - favorite girls
          *     sort them to the top preserving the order they were marked as
