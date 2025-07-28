@@ -839,11 +839,12 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
 
         function popCollect() {
+            let navigationTriggered = false;
             document.addEventListener('keydown', (e) => {
                 if (!window.location.search.includes('tab=pop')) {
                     return;
                 }
-                if (e.key === ' ') {
+                if (!navigationTriggered && e.key === ' ') {
                     const $claimGirlButton = $('#claim-reward');
                     if ($claimGirlButton.length) {
                         $claimGirlButton.trigger('click');
@@ -863,17 +864,24 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     }
                     const $visitButtons = $('button.blue_button_L[rel=pop_thumb_info][style!="display:none"]');
                     $visitButtons.first().trigger('click');
+                    navigationTriggered = true;
                 }
             });
         }
 
         function popAssign() {
-            let quickNavOnce = true;
+            let navigationTriggered = false;
             document.addEventListener('keydown', (e) => {
                 if (!window.location.search.includes('tab=pop')) {
                     return;
                 }
-                if (e.key === ' ') {
+                if (!navigationTriggered && e.key === ' ') {
+                    if (Object.values(pop_data).reduce((inactive, pop)=>{ return inactive + (pop.time_to_finish === 0) }, 0) === 0) {
+                        // nothing else to assign, go home
+                        $(`header > a.hh_logo img`).trigger('click');
+                        navigationTriggered = true;
+                        return;
+                    }
                     const $assignButton = $('.pop-quick-nav button[rel=pop_auto_assign]');
                     if (!$assignButton.attr('disabled')) {
                         $assignButton.trigger('click');
@@ -884,10 +892,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                         $startButton.trigger('click');
                         return;
                     }
-                    if (quickNavOnce) {
-                        quickNavOnce = false;
-                        $('.pop-quick-nav a .pop-quick-nav-next').trigger('click');
-                    }
+                    $('.pop-quick-nav a .pop-quick-nav-next').trigger('click');
+                    navigationTriggered = true;
                 }
             });
         }
