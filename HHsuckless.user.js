@@ -682,11 +682,15 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
 
         if (CONFIG.pov.enabled) {
-            addPovTimer(LS.pov, 'path-of-valor', 'pov_timer', 14 * 24 * 60 * 60)
+            addPovTimer(LS.pov, 'path-of-valor', 'pov_timer', 14 * 24 * 60 * 60);
         }
 
         if (CONFIG.pog.enabled) {
-            addPovTimer(LS.pog, 'path-of-glory', 'pog_timer', 35 * 24 * 60 * 60)
+            addPovTimer(LS.pog, 'path-of-glory', 'pog_timer', 35 * 24 * 60 * 60);
+        }
+
+        if (CONFIG.noWBT.enabled) {
+            $(`div.world-boss`).remove();
         }
 
         addSeasonalInfo();
@@ -1604,6 +1608,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 { enabled: true },
             pog:
                 { enabled: true },
+            noWBT:
+                { enabled: false },
         };
 
         hhPlusPlusConfig.registerGroup({
@@ -1848,6 +1854,21 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
         config.pov.enabled = false;
         config.pog.enabled = false;
+
+        hhPlusPlusConfig.registerModule({
+            group: 'suckless',
+            configSchema: {
+                baseKey: 'noWBT',
+                label: 'hide WBT',
+                default: false,
+            },
+            run() {
+                config.noWBT = {
+                    enabled: true,
+                };
+            },
+        });
+        config.noWBT.enabled = false;
 
         hhPlusPlusConfig.loadConfig();
         hhPlusPlusConfig.runModules();
