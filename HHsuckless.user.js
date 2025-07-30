@@ -328,11 +328,11 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     if (window.location.pathname.includes('/quest/')) {
         /*
+         * - add disabled navigation buttons (back on first scene, next on last
+         *     scene) for consistency
          * - switch scene resolution from 800x450 to 1600x900
          */
-        if (CONFIG.quest.enabled) {
-            quest();
-        }
+        quest();
     }
 
     if (window.location.pathname === '/waifu.html') {
@@ -1207,10 +1207,35 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function quest() {
-        HHPlusPlus.Helpers.doWhenSelectorAvailable('#background', () => {
-            const bg = $('#background')[0];
-            bg.src = bg.src.replace('800x450', '1600x900');
-        });
+        if (CONFIG.quest.highRes) {
+            HHPlusPlus.Helpers.doWhenSelectorAvailable('#background', () => {
+                const bg = $('#background')[0];
+                bg.src = bg.src.replace('800x450', '1600x900');
+            });
+        }
+
+        if (CONFIG.quest.nav) {
+            addNavigationButtons();
+        }
+
+        function addNavigationButtons() {
+            const $backButton = $(`#archive-back`);
+            const $nextButton = $(`#archive-next`);
+            if (!$backButton.length) {
+                $nextButton.before(`
+                    <button id="archive-back" class="finished round_blue_button big-intro-button-angel" disabled>
+                        <img src="https://hh.hh-content.com/design/ic_arrow-left-ffffff.svg">
+                    </button>
+                `);
+            }
+            if (!$nextButton.length) {
+                $backButton.after(`
+                    <button id="archive-next" class="finished round_blue_button big-intro-button-angel" disabled>
+                        <img class="continue" src="https://hh.hh-content.com/design/ic_arrow-right-ffffff.svg">
+                    </button>
+                `);
+            }
+        }
     }
 
     function waifu() {
@@ -1589,7 +1614,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             girlPreview:
                 { enabled: true },
             quest:
-                { enabled: true },
+                { enabled: true, highRes: true, nav: true },
             raid:
                 { enabled: true },
             champ:
@@ -1666,12 +1691,22 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             group: 'suckless',
             configSchema: {
                 baseKey: 'quest',
-                label: 'high resolution scenes',
+                label: 'improved scenes',
                 default: true,
+                subSettings: [
+                    { key: 'highRes', default: true,
+                        label: 'force higher resolution',
+                    },
+                    { key: 'nav', default: true,
+                        label: 'add missing navigation buttons',
+                    },
+                ],
             },
-            run() {
+            run(subSettings) {
                 config.quest = {
                     enabled: true,
+                    highRes: subSettings.highRes,
+                    nav: subSettings.nav,
                 };
             },
         });
