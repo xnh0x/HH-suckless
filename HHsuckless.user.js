@@ -1469,15 +1469,15 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     async function editTeam() {
         const dict = await HHPlusPlus.Helpers.getGirlDictionary();
         const $input = $('<input type="text" id="team_list" placeholder="Team list" style="text-align:center;">');
-        const $setButton = $('<button id="set-team" class="blue_button_L">Get Team</button>');
+        const $setButton = $('<button id="set-team" class="blue_button_L">Copy Team</button>');
         const $clearButton = $('#clear-team');
 
         $clearButton.before($input);
         $clearButton.before($setButton);
 
-        $input.on('input', ()=>{
+        $input.on('input', () => {
             if (!$input.val()) {
-                $setButton.text('Get Team');
+                $setButton.text('Copy Team');
             } else {
                 $setButton.text('Set Team');
             }
@@ -1493,8 +1493,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     const name = dict.get(id).name;
                     names[j] = `"${name}"`;
                 });
-                $input.val(names.join(', '));
-                $input.trigger('input');
+                copyText(names.join(', '));
+                $setButton.text('Copied');
+                setTimeout(() => { $input.trigger('input'); }, 3000);
             } else {
                 $clearButton.trigger('click');
                 const girls = JSON.parse(`[${$input.val()}]`);
