@@ -693,7 +693,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             $(`div.world-boss`).remove();
         }
 
-        addSeasonalInfo();
+        if (CONFIG.seasonal.enabled && CONFIG.seasonal.home) {
+            addSeasonalInfo();
+        }
 
         function addPovTimer(storageKey, rel, id, increment) {
             let end_ts = +localStorage.getItem(storageKey);
@@ -732,15 +734,17 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 return;
             }
 
-            if (seasonalData.type === 0) {
+            if (seasonalData.type === 1) {
                 // seasonal event
-            } else if (seasonalData.type === 1) {
-                // hot assembly
             } else if (seasonalData.type === 2) {
-                lustyRace();
+                // lusty race;
+                addRankingTimer();
+            } else if (seasonalData.type === 3) {
+                // hot assembly
+                addRankingTimer();
             }
 
-            function lustyRace() {
+            function addRankingTimer() {
                 if (!seasonalData.rankingEnd) {
                     return;
                 }
@@ -1113,28 +1117,32 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             seasonalData = { type: type, new: true }
         }
 
-        if (type === 0) {
+        if (type === 1) {
             // seasonalEvent();
-        } else if (type === 1) {
-            // hotAssembly();
         } else if (type === 2) {
             lustyRace();
+        } else if (type === 3) {
+            hotAssembly();
         }
         localStorage.setItem(LS.seasonal, JSON.stringify(seasonalData));
 
         function getType() {
-            if (unsafeWindow.mega_tiers_data
-                && mega_tiers_data.length === 100
-                && mega_tiers_data[99].potions_required === 30000) {
-                // lusty race
-                return 2;
+            if (unsafeWindow.mega_tiers_data) {
+                if (mega_tiers_data.length === 100
+                    && mega_tiers_data[99].potions_required === 30000) {
+                    // lusty race
+                    return 2;
+                }
+                if (mega_tiers_data.length === 210
+                    && mega_tiers_data[209].potions_required === 50000) {
+                    // hot assembly
+                    return 3;
+                }
             }
             return undefined;
         }
 
         // function seasonalEvent() { }
-
-        // function hotAssembly() { }
 
         function lustyRace() {
 
@@ -1166,32 +1174,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             });
 
             if (seasonalData.rankingRewards) {
-                const $topChest = $('#top_ranking_tab .collect_notif');
-                const $eventChest = $('#event_ranking_tab .collect_notif');
-                $topChest.addClass('show-chest');
-                $eventChest.addClass('show-chest');
-
                 addRewardConfirmation('top_ranking_tab');
                 addRewardConfirmation('event_ranking_tab');
-
-                function addRewardConfirmation(tabId) {
-                    $(`#${tabId}`).wrapInner(`<div id="${tabId}_confirm" class="claim-confirmation"></div>`);
-                    $(`#${tabId}_confirm`).on('click', (e) => {
-                        if (confirm('opening ranking tab will claim rewards')) {
-                            rewardsClaimed();
-                        } else {
-                            e.stopPropagation();
-                        }
-                    });
-                }
-
-                function rewardsClaimed() {
-                    seasonalData.rankingRewards = false;
-                    localStorage.setItem(LS.seasonal, JSON.stringify(seasonalData));
-                    $('#mega-event-tabs .claim-confirmation').off('click');
-                    $topChest.removeClass('show-chest');
-                    $eventChest.removeClass('show-chest');
-                }
             }
 
             function addLRCSS() {
@@ -1202,6 +1186,96 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                         }
                     `;
                 document.head.appendChild(sheet);
+            }
+        }
+
+        function hotAssembly() {
+
+            addHACSS();
+
+            if (CONFIG.seasonal.hideHotAssemblyBonusPath) {
+                $('#get_mega_pass_kobans_btn').attr('disabled', '');
+            }
+
+            if (seasonalData.new) {
+                seasonalData = { type: 3, new: false,
+                    seasonalEnd: server_now_ts + mega_event_time_remaining,
+                    rankingEnd: null, rankingRewards: false,
+                };
+            }
+
+            if (seasonalData.rankingEnd === null
+                // just in case the page is reloaded on the ranking tabs
+                || window.location.search.includes('tab=event_ranking_tab_container')) {
+                seasonalData.rankingRewards = false;
+            } else {
+                if (serverNow() > seasonalData.rankingEnd) {
+                    // the next ranking will end three days after the last one
+                    seasonalData.rankingEnd += 3 * 24 * 60 * 60;
+                    seasonalData.rankingRewards = true;
+                }
+            }
+
+            HHPlusPlus.Helpers.doWhenSelectorAvailable('.ranking-timer.timer', () => {
+                seasonalData.rankingEnd = Math.round((serverNow() + parseInt($('.ranking-timer.timer').attr('data-time-stamp'))) / 100) * 100;
+                localStorage.setItem(LS.seasonal, JSON.stringify(seasonalData));
+            });
+
+            if (seasonalData.rankingRewards) {
+                addRewardConfirmation('event_ranking_tab');
+            }
+
+            function addHACSS() {
+                let sheet = document.createElement("style");
+                sheet.textContent = `
+                    #mega-event-tabs .collect_notif.show-chest {
+                        display: unset !important;
+                    }
+                `;
+                if (CONFIG.seasonal.hideHotAssemblyBonusPath) {
+                    sheet.textContent += `
+                        #home_tab_container .mega-progress-bar-tiers.double-mega-event .mega-tier-container {
+                            height: 5rem !important;
+                        }
+                        #home_tab_container .middle-container {
+                            padding-top: 1rem;
+                        }
+                        #home_tab_container .bottom-container {
+                            padding-top: 2rem;
+                            height: 8.75rem !important;
+                        }
+                        #home_tab_container .bottom-container .left-part-container.mega-event-2 {
+                            height: 11rem !important;
+                        }
+                        #home_tab_container .mega-tier.pass-slot,
+                        #home_tab_container .gsp_btn_holder {
+                            display: none !important;
+                        }
+                    `;
+                }
+                document.head.appendChild(sheet);
+            }
+        }
+
+        function addRewardConfirmation(tabId) {
+            const $rewardTab = $(`#${tabId}`);
+            if ($rewardTab.length) {
+                $rewardTab.wrapInner(`<div id="${tabId}_confirm" class="claim-confirmation"></div>`);
+                $rewardTab.find('.collect_notif').addClass('show-chest');
+                $(`#${tabId}_confirm`).on('click', (e) => {
+                    if (confirm('opening ranking tab will claim rewards')) {
+                        rewardsClaimed();
+                    } else {
+                        e.stopPropagation();
+                    }
+                });
+            }
+
+            function rewardsClaimed() {
+                seasonalData.rankingRewards = false;
+                localStorage.setItem(LS.seasonal, JSON.stringify(seasonalData));
+                $('#mega-event-tabs .claim-confirmation').off('click');
+                $('.show-chest').removeClass('show-chest');
             }
         }
     }
@@ -1629,6 +1703,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 { enabled: true },
             season:
                 { enabled: true, useThreshold: false, threshold: 100 },
+            seasonal:
+                { enabled: true, home: true, hideHotAssemblyBonusPath: false },
             lab:
                 { enabled: true },
             editTeam:
@@ -1844,6 +1920,31 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 $input.val(threshold.toString());
             });
         });
+
+        hhPlusPlusConfig.registerModule({
+            group: 'suckless',
+            configSchema: {
+                baseKey: 'seasonal',
+                label: 'improved seasonal',
+                default: true,
+                subSettings: [
+                    { key: 'home', default: true,
+                        label: 'add infos on home page',
+                    },
+                    { key: 'hideHotAssemblyBonusPath', default: false,
+                        label: 'hide hot assembly bonus path',
+                    },
+                ],
+            },
+            run(subSettings) {
+                config.seasonal = {
+                    enabled: true,
+                    home: subSettings.home,
+                    hideHotAssemblyBonusPath: subSettings.hideHotAssemblyBonusPath,
+                };
+            },
+        });
+        config.seasonal.enabled = false;
 
         hhPlusPlusConfig.registerModule({
             group: 'suckless',
