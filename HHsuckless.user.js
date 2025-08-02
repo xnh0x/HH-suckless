@@ -1239,18 +1239,21 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function waifu() {
-        const div = $(`
-            <div style="display: flex">
-                <button id="copy_girls" class="square_blue_btn" style="margin-bottom: 8px; margin-left: 8px; display: block">
-                    <span><img alt="Copy owned girls and skins" tooltip="Copy owned girls and skins" src="${HHPlusPlus.Helpers.getCDNHost()}/design/ic_books_gray.svg"></span>
-                </button>
-            </div>`)[0];
-        const filterButton = $('#filter_girls')[0];
-        filterButton.before(div);
-        filterButton.remove();
-        const copyButton = $('#copy_girls')[0];
-        copyButton.before(filterButton);
-        copyButton.addEventListener('click', copyGirls);
+        const $copyButton = $(`
+            <button id="copy_girls" class="square_blue_btn" style="margin-bottom: 8px; margin-left: 8px; display: block">
+                <span>
+                    <img alt="Copy owned girls and skins" tooltip="Copy owned girls and skins"
+                         src="${HHPlusPlus.Helpers.getCDNHost()}/design/ic_books_gray.svg" 
+                         style="filter: brightness(0) saturate(1) invert(1)">
+                </span>
+            </button>`);
+        $copyButton.on('click', copyGirls);
+
+        HHPlusPlus.Helpers.doWhenSelectorAvailable('#filter_girls', () => {
+            $('#filter_girls')
+                .wrap(`<div style="display: flex"> </div>`)
+                .after($copyButton);
+        });
 
         function copyGirls() {
             const text = girls_data_list.reduce((csv, girl) => {
