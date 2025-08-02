@@ -730,7 +730,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
         function addSeasonalInfo() {
             let seasonalData = JSON.parse(localStorage.getItem(LS.seasonal) ?? '{}');
-            if (seasonalData.type === undefined || serverNow() > seasonalData.seasonalEnd) {
+            if (seasonalData.type === undefined
+                || !seasonalData.seasonalEnd
+                || serverNow() > seasonalData.seasonalEnd) {
                 return;
             }
 
