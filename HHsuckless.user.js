@@ -205,7 +205,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
          *     the "busy" carrot may still show up for a moment when
          *     something would have popped up
          * - add PoV/PoG timers
-         * - add ranking timer and reward chest for LR
+         * - add ranking timer and reward chest for LR/HA
          */
         home();
     }
@@ -322,6 +322,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     if (window.location.pathname === '/seasonal.html') {
         /*
          * - add confirmation to open ranking tabs if there are rewards to claim
+         * - hide HA scam bonus path and reminder popup
          */
         seasonal();
     }
