@@ -798,7 +798,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             }
             HHPlusPlus.Helpers.doWhenSelectorAvailable(check, ()=>{
                 if (!manualClick) {
-                    $(close).trigger('click');
+                    clickOnElement($(close)[0]);
                 }
             });
         }
@@ -859,23 +859,23 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 if (!navigationTriggered && e.key === ' ') {
                     const $claimGirlButton = $('#claim-reward');
                     if ($claimGirlButton.length) {
-                        $claimGirlButton.trigger('click');
+                        clickOnElement($claimGirlButton[0]);
                         return;
                     }
                     const $okButton = $('#rewards_popup button.blue_button_L[confirm_blue_button]');
                     if ($okButton.length) {
-                        $okButton.trigger('click');
+                        clickOnElement($okButton[0]);
                         return;
                     }
                     const $claimButtons = $('button.purple_button_L[rel=pop_thumb_claim][style!="display:none"]');
                     if ($claimButtons.length) {
                         if (!$claimButtons.first().attr('disabled')) {
-                            $claimButtons.first().trigger('click');
+                            clickOnElement($claimButtons[0]);
                         }
                         return;
                     }
                     const $visitButtons = $('button.blue_button_L[rel=pop_thumb_info][style!="display:none"]');
-                    $visitButtons.first().trigger('click');
+                    clickOnElement($visitButtons[0]);
                     navigationTriggered = true;
                 }
             });
@@ -890,21 +890,21 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 if (!navigationTriggered && e.key === ' ') {
                     if (Object.values(pop_data).reduce((inactive, pop)=>{ return inactive + (pop.time_to_finish === 0) }, 0) === 0) {
                         // nothing else to assign, go home
-                        $(`header > a.hh_logo img`).trigger('click');
+                        clickOnElement($(`header > a.hh_logo img`)[0]);
                         navigationTriggered = true;
                         return;
                     }
                     const $assignButton = $('.pop-quick-nav button[rel=pop_auto_assign]');
                     if (!$assignButton.attr('disabled')) {
-                        $assignButton.trigger('click');
+                        clickOnElement($assignButton[0]);
                         return;
                     }
                     const $startButton = $('.pop_central_part button[rel=pop_action]');
                     if (!$startButton.attr('disabled')) {
-                        $startButton.trigger('click');
+                        clickOnElement($startButton[0]);
                         return;
                     }
-                    $('.pop-quick-nav a .pop-quick-nav-next').trigger('click');
+                    clickOnElement($('.pop-quick-nav a .pop-quick-nav-next')[0]);
                     navigationTriggered = true;
                 }
             });
@@ -915,7 +915,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         // space key starts single battle
         document.addEventListener('keydown', (e) => {
             if (e.key === ' ') {
-                document.querySelector(`.battle-buttons .single-battle-button`).click();
+                clickOnElement(document.querySelector(`.battle-buttons .single-battle-button`));
             }
         });
     }
@@ -928,7 +928,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         // space key enters floor
         document.addEventListener('keydown', (e) => {
             if (e.key === ' ') {
-                document.querySelector(`#pantheon_tab_container .pantheon-pre-battle-btn`).click();
+                clickOnElement(document.querySelector(`#pantheon_tab_container .pantheon-pre-battle-btn`));
             }
         });
     }
@@ -937,7 +937,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         // space key starts single battle
         document.addEventListener('keydown', (e) => {
             if (e.key === ' ') {
-                document.querySelector(`.battle-buttons .pantheon-single-battle-button`).click();
+                clickOnElement(document.querySelector(`.battle-buttons .pantheon-single-battle-button`));
             }
         });
     }
@@ -964,11 +964,11 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         document.addEventListener('keydown', (e) => {
             const performButtons = document.querySelectorAll(`.season_arena_opponent_container .green_button_L.btn_season_perform`);
             if (e.key === '1') {
-                performButtons[0].click();
+                clickOnElement(performButtons[0]);
             } else if (e.key === '2') {
-                performButtons[1].click();
+                clickOnElement(performButtons[1]);
             } else if (e.key === '3') {
-                performButtons[2].click();
+                clickOnElement(performButtons[2]);
             }
         });
 
@@ -997,7 +997,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             if (!(CONFIG.season.useThreshold && mainCriterion[best] < CONFIG.season.threshold)) {
                 document.addEventListener('keydown', (e) => {
                     if (e.key === ' ') {
-                        bestOpponent.querySelector(`.green_button_L.btn_season_perform`).click();
+                        clickOnElement(bestOpponent.querySelector(`.green_button_L.btn_season_perform`));
                     }
                 });
             }
@@ -1017,17 +1017,17 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             if (e.key === ' ') {
                 const $claimGirlButton = $('#claim-reward');
                 if ($claimGirlButton.length) {
-                    $claimGirlButton.trigger('click');
+                    clickOnElement($claimGirlButton[0]);
                     return;
                 }
                 const $okButton = $('#rewards_popup button.blue_button_L[close_callback]');
                 if ($okButton.length) {
-                    $okButton.trigger('click');
+                    clickOnElement($okButton[0]);
                     return;
                 }
                 const $skipButton = $('#new-battle-skip-btn');
                 if ($skipButton.length) {
-                    $skipButton.trigger('click');
+                    clickOnElement($skipButton[0]);
                 }
             }
         });
@@ -1580,12 +1580,17 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 $setButton.text('Copied');
                 setTimeout(() => { $input.trigger('input'); }, 3000);
             } else {
-                $clearButton.trigger('click');
+                clickOnElement($clearButton[0]);
                 const girls = JSON.parse(`[${$input.val()}]`);
-                const ids = girls.map(name => dict.keys().find(k => dict.get(k).name===name));
-                ids.forEach(id => {
-                    $(`.harem-girl-container[id_girl=${id}]`).trigger('click');
-                });
+                const ids = girls.map(name => dict.keys().find(k => dict.get(k).name === name));
+                for (const i in ids) {
+                    const girlElement = $(`.harem-girl-container[id_girl=${ids[i]}]`)[0];
+                    if (girlElement) {
+                        clickOnElement(girlElement);
+                    } else {
+                        log(`unowned girl (typo?): ${girls[i]}`)
+                    }
+                }
             }
         });
     }
@@ -1684,6 +1689,16 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             await func();
         }
         observer.observe(document.querySelector(selectors), {childList: true, subtree: true});
+    }
+
+    function clickOnElement(el) {
+        const rect = el.getBoundingClientRect();
+        const posX = rect.left + rect.width / 2;
+        const posY = rect.top + rect.height / 2;
+        el.dispatchEvent(new MouseEvent('click', {
+            bubbles: true,
+            clientX: posX, clientY: posY,
+            screenX: posX, screenY: posY}));
     }
 
     function loadConfig() {
