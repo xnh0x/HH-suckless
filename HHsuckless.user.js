@@ -1198,6 +1198,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
             if (CONFIG.seasonal.hideHotAssemblyBonusPath) {
                 $('#get_mega_pass_kobans_btn').attr('disabled', '');
+                HHPlusPlus.Helpers.doWhenSelectorAvailable('#pass_reminder_popup close', () => {
+                    clickOnElement($('#pass_reminder_popup close')[0]);
+                });
             }
 
             if (seasonalData.new) {
