@@ -17,12 +17,42 @@
 // @grant        unsafeWindow
 // ==/UserScript==
 
+/*global GM_info, unsafeWindow*/
+
 console.log(`HH suckless: version: ${GM_info.script.version}`);
 const local_now_ts = Math.floor(Date.now() / 1000);
 
 (async function suckless() {
     'use strict';
-    /*global $,love_raids,GT,HHPlusPlus,hhPlusPlusConfig,girls_data_list*/
+
+    const {
+        GT: {
+            design: {
+                ends_in: GT_design_ends_in,
+                event_ranking: GT_design_event_ranking,
+                girl_town_event_owned_v2: GT_design_girl_town_event_owned_v2,
+                love_raid: GT_design_love_raid,
+                market_new_stock: GT_design_market_new_stock,
+            }
+        },
+        HHBattleSimulator: {
+            simulateFromTeamsEx,
+        },
+        HHPlusPlus: {
+            Helpers: {
+                doWhenSelectorAvailable,
+                getCDNHost,
+                getGirlDictionary,
+                getHref,
+                getWikiLink,
+            },
+            I18n: {
+                getLang,
+            },
+        },
+        hhPlusPlusConfig,
+        server_now_ts,
+    } = unsafeWindow;
 
     const LS = {
         labFavorites: 'HHsucklessLabFavorites',
@@ -35,7 +65,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         pog: 'HHsucklessPoG',
     }
 
-    if (!unsafeWindow.hhPlusPlusConfig) {
+    if (!hhPlusPlusConfig) {
         log(`waiting for HHPlusPlus`);
         $(document).one('hh++-bdsm:loaded', () => {
             log('HHPlusPlus ready, restart script');
@@ -97,13 +127,13 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 }
                 .harem-girl-container[data-is-favourite="false"] .favourite-toggle,
                 .girl-container[data-is-favourite="false"] .favourite-toggle {
-                    background-image: url('${HHPlusPlus.Helpers.getCDNHost()}/design_v2/affstar_S.png');
+                    background-image: url('${getCDNHost()}/design_v2/affstar_S.png');
                     opacity: 0.7;
                     filter: grayscale(1);
                 }
                 .harem-girl-container[data-is-favourite="true"] .favourite-toggle,
                 .girl-container[data-is-favourite="true"] .favourite-toggle {
-                    background-image: url('${HHPlusPlus.Helpers.getCDNHost()}/design_v2/affstar_S.png');
+                    background-image: url('${getCDNHost()}/design_v2/affstar_S.png');
                 }
                 .girl-container.top7 img.girl-image {
                     border-color: #ffb244 !important;
@@ -191,7 +221,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
      * - replace HH++ PoP bar
      */
     if (CONFIG.activities.popBar) {
-        HHPlusPlus.Helpers.doWhenSelectorAvailable('a.script-pop-timer', popTimerBar);
+        doWhenSelectorAvailable('a.script-pop-timer', popTimerBar);
     }
 
     /*
@@ -351,6 +381,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             PoV();
         }
         // save end time stamp for home page timer
+        const { time_remaining } = unsafeWindow;
         localStorage.setItem(LS.pov, `${server_now_ts + (+time_remaining)}`);
     }
 
@@ -362,6 +393,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             PoV();
         }
         // save end time stamp for home page timer
+        const { time_remaining } = unsafeWindow;
         localStorage.setItem(LS.pog, `${server_now_ts + (+time_remaining)}`);
     }
 
@@ -421,7 +453,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
         repeatOnChange('#common-popups', () => {
             $('#scenes-tab_container .scene-preview_wrapper.unlocked img').each((i, img) => {
-                img.src = HHPlusPlus.Helpers.getHref(img.src);
+                img.src = getHref(img['src']);
             });
         });
     }
@@ -436,6 +468,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     function popTimerBar() {
         if (window.location.pathname === '/activities.html' && window.location.search.includes('&index')) {
+            const { current_pop_data } = unsafeWindow;
             const $claimButton = $('.pop_central_part button[rel="pop_claim"]');
             $claimButton.on('click', () => {
                 let data = JSON.parse(localStorage.getItem(LS.popData));
@@ -449,17 +482,16 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         addPopCSS();
 
         const popBarUpdater = setInterval(updatePopBar, 1000);
-        HHPlusPlus.Helpers.doWhenSelectorAvailable('#canvas_worship_energy', replacePopBar);
+        doWhenSelectorAvailable('#canvas_worship_energy', replacePopBar);
 
         function replacePopBar() {
-            const href = HHPlusPlus.Helpers.getHref('/activities.html?tab=pop');
             const $popBar = $(`
                 <div class="energy_counter" type="pop" id="canvas_pop">
                     <div class="energy_counter_bar">
                         <div class="energy_counter_icon">
                             <span class="hudPop_mix_icn"></span>
                         </div>
-                        <a href="${href}">
+                        <a href="${getHref('/activities.html?tab=pop')}">
                             <div class="bar-wrapper">
                                 <div class="bar red"></div>
                                 <div class="over">
@@ -481,7 +513,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             const popData = updatePopData(firstRun);
             const $popBar = $('#canvas_pop');
             if ($.isEmptyObject(popData)) {
-                $popBar.find('.energy_counter_amount')[0].innerHTML = 'open PoP page';
+                $popBar.find('.energy_counter_amount').text('open PoP page');
                 $popBar.find('.over span[rel="increment_txt"]').css('display', 'none');
                 return;
             }
@@ -499,17 +531,17 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 next.increment = running.filter((e) => e.end_ts === running[0].end_ts).length;
             }
 
-            $popBar.find('.energy_counter_amount span[finished]')[0].innerText = `${finished}`;
-            $popBar.find('.energy_counter_amount span[rel="max"]')[0].innerText = `${popData.active}`;
+            $popBar.find('.energy_counter_amount span[finished]').text(`${finished}`);
+            $popBar.find('.energy_counter_amount span[rel="max"]').text(`${popData.active}`);
             $popBar.find('.energy_counter_amount span[rel="max"]').css('color', popData.inactive ? '#ec0039' : 'unset');
             if (next) {
                 $popBar.find('.bar.red').css('width', `${next.elapsed / next.totalDuration * 100}%`);
                 $popBar.find('.over span[rel="increment_txt"]').css('display', 'unset');
-                $popBar.find('.over span[rel="increment"]')[0].innerText = `${next.increment}`;
-                $popBar.find('.over span[rel="time"]')[0].innerText = `${formatTime(next.remaining)}`;
+                $popBar.find('.over span[rel="increment"]').text(`${next.increment}`);
+                $popBar.find('.over span[rel="time"]').text(`${formatTime(next.remaining)}`);
                 $popBar.find('.hudPop_mix_icn').attr('tooltip',
                     `Ready in <span class="orange" rel="timer">${formatTime(last.end_ts - now)}</span>`
-                    + `<br>Ready at <span class="orange">${(new Date(last.end_ts * 1000)).toLocaleString(HHPlusPlus.I18n.getLang(), {'hour':'numeric', 'minute':'numeric'})}</span>`);
+                    + `<br>Ready at <span class="orange">${(new Date(last.end_ts * 1000)).toLocaleString(getLang(), {'hour':'numeric', 'minute':'numeric'})}</span>`);
             } else {
                 $popBar.find('.bar.red').css('width', '100%');
                 $popBar.find('.over span[rel="increment_txt"]').css('display', 'none');
@@ -524,6 +556,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         function updatePopData(firstRun = false) {
             let data = JSON.parse(localStorage.getItem(LS.popData)) || {};
             if (firstRun && window.location.pathname === '/activities.html') {
+                const { pop_data } = unsafeWindow;
                 const popArr = Object.values(pop_data);
                 const times = popArr.reduce((acc, curr) => {
                     if (curr.time_to_finish) {
@@ -544,6 +577,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             }
 
             if (window.location.pathname === '/activities.html' && window.location.search.includes('&index')) {
+                const { current_pop_data } = unsafeWindow;
                 const $progressBar = $('#pop_info .pop_central_part .hh_bar');
                 if (data.updated || $progressBar.css('display') === 'none') {
                     return data;
@@ -671,7 +705,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function mainMenu() {
-        HHPlusPlus.Helpers.doWhenSelectorAvailable('#contains_all > nav > [rel="content"] > div', () => {
+        doWhenSelectorAvailable('#contains_all > nav > [rel="content"] > div', () => {
             $('#contains_all > nav > [rel="content"] > div')[0].style.transition = 'none';
         });
     }
@@ -710,7 +744,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 const $potionText = $(`a[rel="${rel}"] .pov-widget .white_text`);
                 const $potionsBar = $(`a[rel="${rel}"] .pov-widget .pov-tier-bar`);
                 const $timer = $(`
-                    <span style="color: #8EC3FF;">${capitalize(GT.design.ends_in)} <span id="${id}" ></span>
+                    <span style="color: #8EC3FF;">${capitalize(GT_design_ends_in)} <span id="${id}" ></span>
                     </span>
                 `);
                 if (!$(`.potions-paths-buttons`).length) {
@@ -775,7 +809,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
                 $megaEvent.append(`
                     <div class="mega-event-timer timer">
-                        <p>${GT.design.event_ranking} ${GT.design.ends_in}
+                        <p>${GT_design_event_ranking} ${GT_design_ends_in}
                             <span id="ranking_timer" rel="expires"></span>
                         </p>
                     </div>
@@ -796,7 +830,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     manualClick = true;
                 });
             }
-            HHPlusPlus.Helpers.doWhenSelectorAvailable(check, ()=>{
+            doWhenSelectorAvailable(check, ()=>{
                 if (!manualClick) {
                     clickOnElement($(close)[0]);
                 }
@@ -842,6 +876,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function activities() {
+        const { pop_data } = unsafeWindow;
         if (CONFIG.activities.popShortcuts) {
             if (window.location.search.includes('&index')) {
                 popAssign();
@@ -1034,7 +1069,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     async function loveRaids() {
-        const girls = await HHPlusPlus.Helpers.getGirlDictionary()
+        /*global love_raids*/
+        const girls = await getGirlDictionary()
             .then(dict => love_raids.map(raid => dict.get(raid.id_girl.toString())));
 
         document.querySelectorAll('.raid-card').forEach((raidCard, i) => {
@@ -1043,24 +1079,24 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 return;
             }
             const {name, shards, grade_offsets} = girls[i];
-            const haremLink = HHPlusPlus.Helpers.getHref(`/characters/${love_raids[i].id_girl}`);
-            const wikiLink = HHPlusPlus.Helpers.getWikiLink(name, love_raids[i].id_girl, HHPlusPlus.I18n.getLang());
+            const haremLink = getHref(`/characters/${love_raids[i].id_girl}`);
+            const wikiLink = getWikiLink(name, love_raids[i].id_girl, getLang());
             const objectives = raidCard.querySelectorAll('.classic-girl');
             const girl = objectives[0];
             const skin = objectives[1];
 
             // fill names on mysterious girls and make all names link to the wiki
-            raidCard.querySelector('.raid-name span span').innerText = `${name} ${GT.design.love_raid}`;
+            raidCard.querySelector('.raid-name span span').innerText = `${name} ${GT_design_love_raid}`;
             girl.querySelector('.girl-name').innerHTML = `<a href="${wikiLink}" target="_blank">${name}</a>`;
 
             // replace shadow poses
             const leftImage = raidCard.querySelector('.girl-img.left');
-            leftImage.src = `${HHPlusPlus.Helpers.getCDNHost()}/pictures/girls/${love_raids[i].id_girl}/ava0.png`;
+            leftImage.src = `${getCDNHost()}/pictures/girls/${love_raids[i].id_girl}/ava0.png`;
             if (raidCard.classList.contains('multiple-girl')) {
                 const rightImage = raidCard.querySelector('.girl-img.right');
                 if (!rightImage.src.includes('grade_skins')) {
                     // there is no good way to tell which skin it will be so this will always show the first
-                    rightImage.src = `${HHPlusPlus.Helpers.getCDNHost()}/pictures/girls/${love_raids[i].id_girl}/grade_skins/grade_skin1.png`;
+                    rightImage.src = `${getCDNHost()}/pictures/girls/${love_raids[i].id_girl}/grade_skins/grade_skin1.png`;
                 }
             }
 
@@ -1081,7 +1117,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             // enable go buttons of owned girls/skins
             const goButtons = raidCard.querySelectorAll('.redirect_button');
             if (shards === 100) {
-                girl.querySelector('.objective').innerText = GT.design.girl_town_event_owned_v2;
+                girl.querySelector('.objective').innerText = GT_design_girl_town_event_owned_v2;
                 goButtons[0].removeAttribute('disabled');
                 goButtons[0].href = haremLink;
                 if (skin) {
@@ -1109,6 +1145,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function seasonal() {
+        const { mega_event_time_remaining } = unsafeWindow;
         const type = getType();
         if (type === undefined) {
             log(`can't tell ME type`);
@@ -1130,14 +1167,15 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         localStorage.setItem(LS.seasonal, JSON.stringify(seasonalData));
 
         function getType() {
-            if (unsafeWindow.mega_tiers_data) {
+            const { mega_tiers_data } = unsafeWindow;
+            if (mega_tiers_data) {
                 if (mega_tiers_data.length === 100
-                    && mega_tiers_data[99].potions_required === 30000) {
+                    && mega_tiers_data[99]['potions_required'] === 30000) {
                     // lusty race
                     return 2;
                 }
                 if (mega_tiers_data.length === 210
-                    && mega_tiers_data[209].potions_required === 50000) {
+                    && mega_tiers_data[209]['potions_required'] === 50000) {
                     // hot assembly
                     return 3;
                 }
@@ -1148,7 +1186,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         // function seasonalEvent() { }
 
         function lustyRace() {
-
             addLRCSS();
 
             if (seasonalData.new) {
@@ -1171,7 +1208,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 }
             }
 
-            HHPlusPlus.Helpers.doWhenSelectorAvailable('.ranking-timer.timer', () => {
+            doWhenSelectorAvailable('.ranking-timer.timer', () => {
                 seasonalData.rankingEnd = Math.round((serverNow() + parseInt($('.ranking-timer.timer').attr('data-time-stamp'))) / 100) * 100;
                 localStorage.setItem(LS.seasonal, JSON.stringify(seasonalData));
             });
@@ -1198,7 +1235,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
             if (CONFIG.seasonal.hideHotAssemblyBonusPath) {
                 $('#get_mega_pass_kobans_btn').attr('disabled', '');
-                HHPlusPlus.Helpers.doWhenSelectorAvailable('#pass_reminder_popup close', () => {
+                doWhenSelectorAvailable('#pass_reminder_popup close', () => {
                     clickOnElement($('#pass_reminder_popup close')[0]);
                 });
             }
@@ -1222,7 +1259,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 }
             }
 
-            HHPlusPlus.Helpers.doWhenSelectorAvailable('.ranking-timer.timer', () => {
+            doWhenSelectorAvailable('.ranking-timer.timer', () => {
                 seasonalData.rankingEnd = Math.round((serverNow() + parseInt($('.ranking-timer.timer').attr('data-time-stamp'))) / 100) * 100;
                 localStorage.setItem(LS.seasonal, JSON.stringify(seasonalData));
             });
@@ -1288,7 +1325,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     function quest() {
         if (CONFIG.quest.highRes) {
-            HHPlusPlus.Helpers.doWhenSelectorAvailable('#background', () => {
+            doWhenSelectorAvailable('#background', () => {
                 const bg = $('#background')[0];
                 bg.src = bg.src.replace('800x450', '1600x900');
             });
@@ -1304,14 +1341,14 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             if (!$backButton.length) {
                 $nextButton.before(`
                     <button id="archive-back" class="finished round_blue_button big-intro-button-angel" disabled>
-                        <img src="https://hh.hh-content.com/design/ic_arrow-left-ffffff.svg">
+                        <img src="https://hh.hh-content.com/design/ic_arrow-left-ffffff.svg" alt="<">
                     </button>
                 `);
             }
             if (!$nextButton.length) {
                 $backButton.after(`
                     <button id="archive-next" class="finished round_blue_button big-intro-button-angel" disabled>
-                        <img class="continue" src="https://hh.hh-content.com/design/ic_arrow-right-ffffff.svg">
+                        <img class="continue" src="https://hh.hh-content.com/design/ic_arrow-right-ffffff.svg" alt=">">
                     </button>
                 `);
             }
@@ -1319,17 +1356,18 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function waifu() {
+        const { girls_data_list } = unsafeWindow;
         const $copyButton = $(`
             <button id="copy_girls" class="square_blue_btn" style="margin-bottom: 8px; margin-left: 8px; display: block">
                 <span>
                     <img alt="Copy owned girls and skins" tooltip="Copy owned girls and skins"
-                         src="${HHPlusPlus.Helpers.getCDNHost()}/design/ic_books_gray.svg" 
+                         src="${getCDNHost()}/design/ic_books_gray.svg" 
                          style="filter: brightness(0) saturate(1) invert(1)">
                 </span>
             </button>`);
         $copyButton.on('click', copyGirls);
 
-        HHPlusPlus.Helpers.doWhenSelectorAvailable('#filter_girls', () => {
+        doWhenSelectorAvailable('#filter_girls', () => {
             $('#filter_girls')
                 .wrap(`<div style="display: flex"> </div>`)
                 .after($copyButton);
@@ -1348,6 +1386,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function PoV() {
+        const { time_remaining } = unsafeWindow;
         repeatOnChange('.potions-paths-progress-bar-tiers', () => {
             if (+time_remaining < 23.5 * 60 * 60) { return; } // only hide until the contest starts on the last day
             const claimAll = $('.potions-paths-tier.unclaimed.claim-all-rewards')[0];
@@ -1359,7 +1398,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function labyrinthPoolSelect() {
-        HHPlusPlus.Helpers.doWhenSelectorAvailable('.labyrinth-pool-select-container .girl-grid', async () => {
+        doWhenSelectorAvailable('.labyrinth-pool-select-container .girl-grid', async () => {
+            const { owned_girls } = unsafeWindow;
             const favorites = new FavoriteLabGirls();
 
             $('.girl-grid .girl-container').each((i, girl) => {
@@ -1380,10 +1420,11 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     function labyrinth() {
         // favorites
-        HHPlusPlus.Helpers.doWhenSelectorAvailable('#squad_tab_container .squad-container .girl-grid', async () => {
+        doWhenSelectorAvailable('#squad_tab_container .squad-container .girl-grid', async () => {
+            const { girl_squad } = unsafeWindow;
             const favorites = new FavoriteLabGirls();
 
-            const top7 = getTop7(girl_squad.map(girl => girl.member_girl));
+            const top7 = getTop7(girl_squad.map(girl => girl['member_girl']));
 
             await repeatOnChange('#squad_tab_container .squad-container', async () => {
                 $('.girl-grid .girl-container').each((i,girl) => {
@@ -1395,33 +1436,33 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
 
         // shop timer
-        HHPlusPlus.Helpers.doWhenSelectorAvailable('#shop_tab_container .item-container .slot', async () => {
+        doWhenSelectorAvailable('#shop_tab_container .item-container .slot', async () => {
             const currentShopCycleEnd = updateCycleEnd();
 
             await repeatOnChange('#shop_tab_container', setShopTimer, true);
 
             setInterval(function() {
-                const timer = $('#shop_tab_container .shop-timer p span')[0];
-                if (timer) {
+                const timer = $('#shop_tab_container .shop-timer p span');
+                if (timer.length) {
                     // just to trigger setShopTimer through the observer
-                    timer.innerText = '';
+                    timer.text('');
                 }
             }, 1000);
 
             function setShopTimer() {
-                const timer = $('#shop_tab_container .shop-timer p')[0];
-                if (!timer) { return; }
+                const timer = $('#shop_tab_container .shop-timer p');
+                if (!timer.length) { return; }
                 const seconds = currentShopCycleEnd - serverNow();
                 if (seconds > 0) {
                     const h = Math.floor(seconds / 3600);
                     const m = Math.floor((seconds % 3600) / 60);
                     const s = seconds % 60;
                     const timeString = (h > 0 ? `${h}h ` : '') + (h > 0 || m > 0 ? `${m}m ` : '') + `${s}s`;
-                    timer.innerHTML = `${GT.design.market_new_stock}<span rel="expires">${timeString}</span>`;
+                    timer.html(`${GT_design_market_new_stock}<span rel="expires">${timeString}</span>`);
                 } else {
                     // since the timer is the latest time that restocking happens it must have
                     // happened now so force a reload to prevent buying unknown items from the new stock
-                    timer.innerHTML = 'Refresh!';
+                    timer.html('Refresh!');
                     $('.shop-section .slot').css('filter', 'grayscale(1)');
                     $('.blue_button_L.buy-item').attr('disabled', '');
                     setTimeout(() => { window.location.reload(); }, 2500);
@@ -1429,6 +1470,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             }
 
             function updateCycleEnd(force = false) {
+                /*global cycle_end_in_seconds*/
                 const oldCycleEnd = +localStorage.getItem(LS.labShopCycleEnd);
                 const twelveHours = 12 * 60 * 60;
 
@@ -1523,7 +1565,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function editLabyrinthTeam() {
-        HHPlusPlus.Helpers.doWhenSelectorAvailable('.harem-panel-girls', async () => {
+        doWhenSelectorAvailable('.harem-panel-girls', async () => {
             const favorites = new FavoriteLabGirls();
             $('.harem-panel-girls .harem-girl-container').each((i,girl) => {
                 favorites.prepareGirlElement(girl, 'id_girl');
@@ -1550,7 +1592,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     async function editTeam() {
-        const dict = await HHPlusPlus.Helpers.getGirlDictionary();
+        const dict = await getGirlDictionary();
         const $input = $('<input type="text" id="team_list" placeholder="Team list" style="text-align:center;">');
         const $setButton = $('<button id="set-team" class="blue_button_L">Copy Team</button>');
         const $clearButton = $('#clear-team');
@@ -1637,6 +1679,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         const textArea = $(`<textarea>${text}</textarea>`)[0];
         document.body.appendChild(textArea);
         textArea.select();
+        // noinspection JSDeprecatedSymbols
         document.execCommand('copy');
         textArea.remove();
     }
@@ -1738,12 +1781,19 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 { enabled: false },
         };
 
-        hhPlusPlusConfig.registerGroup({
+        const {
+            loadConfig: hhLoadConfig,
+            registerGroup,
+            registerModule,
+            runModules,
+        } = hhPlusPlusConfig;
+
+        registerGroup({
             key: 'suckless',
             name: 'suckless'
         });
 
-        hhPlusPlusConfig.registerModule({
+        registerModule({
             group: 'suckless',
             configSchema: {
                 baseKey: 'reload',
@@ -1758,7 +1808,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
         config.reload.enabled = false;
 
-        hhPlusPlusConfig.registerModule({
+        registerModule({
             group: 'suckless',
             configSchema: {
                 baseKey: 'news',
@@ -1773,7 +1823,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
         config.news.enabled = false;
 
-        hhPlusPlusConfig.registerModule({
+        registerModule({
             group: 'suckless',
             configSchema: {
                 baseKey: 'girlPreview',
@@ -1788,7 +1838,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
         config.girlPreview.enabled = false;
 
-        hhPlusPlusConfig.registerModule({
+        registerModule({
             group: 'suckless',
             configSchema: {
                 baseKey: 'quest',
@@ -1813,7 +1863,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
         config.quest.enabled = false;
 
-        hhPlusPlusConfig.registerModule({
+        registerModule({
             group: 'suckless',
             configSchema: {
                 baseKey: 'raid',
@@ -1828,7 +1878,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
         config.raid.enabled = false;
 
-        hhPlusPlusConfig.registerModule({
+        registerModule({
             group: 'suckless',
             configSchema: {
                 baseKey: 'champ',
@@ -1853,7 +1903,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
         config.champ.enabled = false;
 
-        hhPlusPlusConfig.registerModule({
+        registerModule({
             group: 'suckless',
             configSchema: {
                 baseKey: 'activities',
@@ -1878,7 +1928,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
         config.activities.enabled = false;
 
-        hhPlusPlusConfig.registerModule({
+        registerModule({
             group: 'suckless',
             configSchema: {
                 baseKey: 'villain',
@@ -1893,7 +1943,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
         config.villain.enabled = false;
 
-        hhPlusPlusConfig.registerModule({
+        registerModule({
             group: 'suckless',
             configSchema: {
                 baseKey: 'pantheon',
@@ -1908,7 +1958,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
         config.pantheon.enabled = false;
 
-        hhPlusPlusConfig.registerModule({
+        registerModule({
             group: 'suckless',
             configSchema: {
                 baseKey: 'season',
@@ -1930,7 +1980,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
         config.season.enabled = false;
 
-        HHPlusPlus.Helpers.doWhenSelectorAvailable('#season-threshold-input', () => {
+        doWhenSelectorAvailable('#season-threshold-input', () => {
             const $input = $('#season-threshold-input');
             let threshold = parseFloat(localStorage.getItem(LS.seasonChanceThreshold) ?? '100');
             $input.val(threshold.toString());
@@ -1942,7 +1992,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             });
         });
 
-        hhPlusPlusConfig.registerModule({
+        registerModule({
             group: 'suckless',
             configSchema: {
                 baseKey: 'seasonal',
@@ -1967,7 +2017,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
         config.seasonal.enabled = false;
 
-        hhPlusPlusConfig.registerModule({
+        registerModule({
             group: 'suckless',
             configSchema: {
                 baseKey: 'lab',
@@ -1982,7 +2032,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
         config.lab.enabled = false;
 
-        hhPlusPlusConfig.registerModule({
+        registerModule({
             group: 'suckless',
             configSchema: {
                 baseKey: 'editTeam',
@@ -1997,7 +2047,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
         config.editTeam.enabled = false;
 
-        hhPlusPlusConfig.registerModule({
+        registerModule({
             group: 'suckless',
             configSchema: {
                 baseKey: 'pov',
@@ -2016,7 +2066,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         config.pov.enabled = false;
         config.pog.enabled = false;
 
-        hhPlusPlusConfig.registerModule({
+        registerModule({
             group: 'suckless',
             configSchema: {
                 baseKey: 'noWBT',
@@ -2031,8 +2081,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
         config.noWBT.enabled = false;
 
-        hhPlusPlusConfig.loadConfig();
-        hhPlusPlusConfig.runModules();
+        hhLoadConfig();
+        runModules();
 
         return config;
     }
