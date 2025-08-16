@@ -1387,14 +1387,14 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     function PoV() {
         const { time_remaining } = unsafeWindow;
-        repeatOnChange('.potions-paths-progress-bar-tiers', () => {
+        runAndRepeatOnChange('.potions-paths-progress-bar-tiers', () => {
             if (+time_remaining < 23.5 * 60 * 60) { return; } // only hide until the contest starts on the last day
             const claimAll = $('.potions-paths-tier.unclaimed.claim-all-rewards')[0];
             if (claimAll) {
                 claimAll.classList.remove('claim-all-rewards');
                 claimAll.querySelector('#claim-all').style.display = 'none';
             }
-        }, true);
+        });
     }
 
     function labyrinthPoolSelect() {
@@ -1408,13 +1408,13 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
             const top7 = getTop7(owned_girls);
 
-            await repeatOnChange('.labyrinth-pool-select-container .girl-grid', async () => {
+            await runAndRepeatOnChange('.labyrinth-pool-select-container .girl-grid', async () => {
                 $('.girl-grid .girl-container').each((i, girl) => {
                     favorites.prepareGirlElement(girl, 'id_girl', top7, owned_girls);
                 });
 
                 moveTop7Up(top7, '.girl-grid .girl-container', 'id_girl');
-            }, true);
+            });
         });
     }
 
@@ -1426,20 +1426,20 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
             const top7 = getTop7(girl_squad.map(girl => girl['member_girl']));
 
-            await repeatOnChange('#squad_tab_container .squad-container', async () => {
+            await runAndRepeatOnChange('#squad_tab_container .squad-container', async () => {
                 $('.girl-grid .girl-container').each((i,girl) => {
                     favorites.prepareGirlElement(girl, 'id', top7);
                 });
 
                 moveTop7Up(top7, '.girl-grid .girl-container', 'id');
-            }, true);
+            });
         });
 
         // shop timer
         doWhenSelectorAvailable('#shop_tab_container .item-container .slot', async () => {
             const currentShopCycleEnd = updateCycleEnd();
 
-            await repeatOnChange('#shop_tab_container', setShopTimer, true);
+            await runAndRepeatOnChange('#shop_tab_container', setShopTimer);
 
             setInterval(function() {
                 const timer = $('#shop_tab_container .shop-timer p span');
@@ -1585,9 +1585,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 }
             });
 
-            await repeatOnChange('.harem-panel-girls', async () => {
+            await runAndRepeatOnChange('.harem-panel-girls', async () => {
                 $(document).trigger('updateFavorites');
-            }, true);
+            });
         });
     }
 
@@ -1722,15 +1722,22 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         observer.observe(document.querySelector(selectors), {childList: true, subtree: true});
     }
 
-    async function repeatOnChange(selectors, func, runImmediately = false) {
+    function repeatOnChange(selectors, func) {
         const observer = new MutationObserver(async () => {
             observer.disconnect();
             await func();
             observer.observe(document.querySelector(selectors), {childList: true, subtree: true});
         });
-        if (runImmediately) {
+        observer.observe(document.querySelector(selectors), {childList: true, subtree: true});
+    }
+
+    async function runAndRepeatOnChange(selectors, func) {
+        const observer = new MutationObserver(async () => {
+            observer.disconnect();
             await func();
-        }
+            observer.observe(document.querySelector(selectors), {childList: true, subtree: true});
+        });
+        await func();
         observer.observe(document.querySelector(selectors), {childList: true, subtree: true});
     }
 
