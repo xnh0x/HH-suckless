@@ -42,6 +42,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 girl_town_event_owned_v2: GT_design_girl_town_event_owned_v2,
                 love_raid: GT_design_love_raid,
                 market_new_stock: GT_design_market_new_stock,
+                raids_ongoing: GT_design_raids_ongoing,
+                upcoming_love_raids: GT_design_upcoming_love_raids,
             }
         },
         HHBattleSimulator: {
@@ -67,6 +69,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         labFavorites: 'HHsucklessLabFavorites',
         labShopCycleEnd: 'HHsucklessLabShopCycleEnd',
         labShopStock: 'HHsucklessLabShopStock',
+        loveRaids: 'HHsucklessLoveRaids',
         pog: 'HHsucklessPoG',
         popData: 'HHsucklessPopData',
         pov: 'HHsucklessPoV',
@@ -236,6 +239,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
          *     something would have popped up
          * - add PoV/PoG timers
          * - add ranking timer and reward chest for LR/HA
+         * - reduce love raid counters to exclude completed raids
          */
         home();
     }
@@ -722,6 +726,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function home() {
+        setNonCompletedRaidCounts();
+
         if (CONFIG.news.enabled) {
             preventAutoPopup(['.info-container .chest-container', '.currency plus', '#mc-selector'], '#shop-payment-tabs', '#common-popups close');
             preventAutoPopup(['#news_button'], '#news_details_popup', '#common-popups close');
@@ -741,6 +747,27 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
         if (CONFIG.seasonal.enabled && CONFIG.seasonal.home) {
             addSeasonalInfo();
+        }
+
+        function setNonCompletedRaidCounts() {
+            const raids = JSON.parse(localStorage.getItem(LS.loveRaids));
+            if (!raids) return;
+            const outdated = (server_now_ts - raids.checked > 24 * 60 * 60);
+            let ongoing = 0, upcoming = 0;
+            raids.times.forEach((time) => {
+                if (time.start < server_now_ts) {
+                    if (time.end > server_now_ts) {
+                        ongoing += 1;
+                    }
+                } else {
+                    upcoming += 1;
+                }
+            });
+            const $raidAmounts = $(`.raids .raids-amount`);
+            $raidAmounts.first().html(
+                `<span ${outdated ? 'style="color:pink"' : ''}>${ongoing}</span> ${GT_design_raids_ongoing}`);
+            $raidAmounts.last().html(
+                `<span ${outdated ? 'style="color:pink"' : ''}>${upcoming}</span> ${GT_design_upcoming_love_raids}`);
         }
 
         function addPovTimer(storageKey, rel, id, increment) {
@@ -1081,6 +1108,27 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     async function loveRaids() {
         /*global love_raids*/
+
+        // save raid times for home page counts
+        localStorage.setItem(LS.loveRaids,
+            JSON.stringify(love_raids.reduce((result, raid) => {
+                if (!raid['all_is_owned']) {
+                    let start, end;
+                    if (raid['status'] === 'ongoing') {
+                        const { seconds_until_event_end } = raid;
+                        start = 0; // irrelevant since it is running
+                        end = server_now_ts + seconds_until_event_end;
+                    } else {
+                        const { event_duration_seconds, seconds_until_event_start } = raid;
+                        start = server_now_ts + seconds_until_event_start;
+                        end = start + event_duration_seconds;
+                    }
+                    result.times.push({ start, end });
+                }
+                return result;
+            }, { checked: server_now_ts, times: []}))
+        );
+
         const girls = await getGirlDictionary()
             .then(dict => love_raids.map(raid => dict.get(raid.id_girl.toString())));
 
