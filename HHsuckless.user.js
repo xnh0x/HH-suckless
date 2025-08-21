@@ -25,6 +25,15 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 (async function suckless() {
     'use strict';
 
+    if (!unsafeWindow['hhPlusPlusConfig']) {
+        log(`waiting for HHPlusPlus`);
+        $(document).one('hh++-bdsm:loaded', () => {
+            log('HHPlusPlus ready, restart script');
+            suckless();
+        });
+        return;
+    }
+
     const {
         GT: {
             design: {
@@ -58,20 +67,11 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         labFavorites: 'HHsucklessLabFavorites',
         labShopCycleEnd: 'HHsucklessLabShopCycleEnd',
         labShopStock: 'HHsucklessLabShopStock',
-        popData: 'HHsucklessPopData',
-        seasonChanceThreshold: 'HHsucklessSeasonChanceThreshold',
-        seasonal: 'HHsucklessSeasonal',
-        pov: 'HHsucklessPoV',
         pog: 'HHsucklessPoG',
-    }
-
-    if (!hhPlusPlusConfig) {
-        log(`waiting for HHPlusPlus`);
-        $(document).one('hh++-bdsm:loaded', () => {
-            log('HHPlusPlus ready, restart script');
-            suckless();
-        });
-        return;
+        popData: 'HHsucklessPopData',
+        pov: 'HHsucklessPoV',
+        seasonal: 'HHsucklessSeasonal',
+        seasonChanceThreshold: 'HHsucklessSeasonChanceThreshold',
     }
 
     const CONFIG = loadConfig();
