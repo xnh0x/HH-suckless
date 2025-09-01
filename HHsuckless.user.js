@@ -357,6 +357,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         /*
          * - add confirmation to open ranking tabs if there are rewards to claim
          * - hide HA scam bonus path and reminder popup
+         * - hide SEM scam bonus path and reminder popup
          */
         seasonal();
     }
@@ -811,6 +812,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
             if (seasonalData.type === 1) {
                 // seasonal event
+                // there is nothing relevant to show on the homepage
             } else if (seasonalData.type === 2) {
                 // lusty race;
                 addRankingTimer();
@@ -1217,7 +1219,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
 
         if (type === 1) {
-            // seasonalEvent();
+            seasonalEvent();
         } else if (type === 2) {
             lustyRace();
         } else if (type === 3) {
@@ -1228,6 +1230,11 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         function getType() {
             const { mega_tiers_data } = unsafeWindow;
             if (mega_tiers_data) {
+                if (mega_tiers_data.length === 115
+                    && mega_tiers_data[114]['potions_required'] === 40000) {
+                    // seasonal event
+                    return 1;
+                }
                 if (mega_tiers_data.length === 100
                     && mega_tiers_data[99]['potions_required'] === 30000) {
                     // lusty race
@@ -1242,7 +1249,50 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             return undefined;
         }
 
-        // function seasonalEvent() { }
+        function seasonalEvent() {
+
+            addSECSS();
+
+            if (CONFIG.seasonal.hideSeasonalEventBonusPath) {
+                $('#get_mega_pass_kobans_btn').attr('disabled', '');
+                doWhenSelectorAvailable('#pass_reminder_popup close', () => {
+                    clickOnElement($('#pass_reminder_popup close')[0]);
+                });
+            }
+
+            if (seasonalData.new) {
+                seasonalData = { type: 1, new: false,
+                    seasonalEnd: server_now_ts + mega_event_time_remaining,
+                };
+            }
+
+            function addSECSS() {
+                let sheet = document.createElement("style");
+                sheet.textContent = ``;
+                if (CONFIG.seasonal.hideSeasonalEventBonusPath) {
+                    sheet.textContent += `
+                        #home_tab_container .mega-progress-bar-tiers.double-mega-event .mega-tier-container {
+                            height: 5rem !important;
+                        }
+                        #home_tab_container .middle-container {
+                            padding-top: 1rem;
+                        }
+                        #home_tab_container .bottom-container {
+                            padding-top: 2rem;
+                            height: 8.75rem !important;
+                        }
+                        #home_tab_container .bottom-container .left-part-container.mega-event-2 {
+                            height: 11rem !important;
+                        }
+                        #home_tab_container .mega-tier.pass-slot,
+                        #home_tab_container .gsp_btn_holder {
+                            display: none !important;
+                        }
+                    `;
+                }
+                document.head.appendChild(sheet);
+            }
+        }
 
         function lustyRace() {
             addLRCSS();
@@ -1857,7 +1907,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             season:
                 { enabled: true, useThreshold: false, threshold: 100 },
             seasonal:
-                { enabled: true, home: true, hideHotAssemblyBonusPath: false },
+                { enabled: true, home: true, hideHotAssemblyBonusPath: false , hideSeasonalEventBonusPath: false },
             lab:
                 { enabled: true },
             editTeam:
@@ -2092,7 +2142,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                         label: 'add infos on home page',
                     },
                     { key: 'hideHotAssemblyBonusPath', default: false,
-                        label: 'hide hot assembly bonus path',
+                        label: 'hide HA bonus path',
+                    },
+                    { key: 'hideSeasonalEventBonusPath', default: false,
+                        label: 'hide SEM bonus path',
                     },
                 ],
             },
@@ -2101,6 +2154,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     enabled: true,
                     home: subSettings.home,
                     hideHotAssemblyBonusPath: subSettings.hideHotAssemblyBonusPath,
+                    hideSeasonalEventBonusPath: subSettings.hideSeasonalEventBonusPath,
                 };
             },
         });
