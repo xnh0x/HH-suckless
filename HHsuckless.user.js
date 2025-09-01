@@ -1142,18 +1142,40 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             const {name, shards, grade_offsets} = girls[i];
             const haremLink = getHref(`/characters/${love_raids[i].id_girl}`);
             const wikiLink = getWikiLink(name, love_raids[i].id_girl, getLang());
-            const objectives = raidCard.querySelectorAll('.classic-girl');
-            const girl = objectives[0];
-            const skin = objectives[1];
-
-            // fill names on mysterious girls and make all names link to the wiki
-            raidCard.querySelector('.raid-name span span').innerText = `${name} ${GT_design_love_raid}`;
-            girl.querySelector('.girl-name').innerHTML = `<a href="${wikiLink}" target="_blank">${name}</a>`;
 
             // replace shadow poses
             const leftImage = raidCard.querySelector('.girl-img.left');
             leftImage.src = `${getCDNHost()}/pictures/girls/${love_raids[i].id_girl}/ava0.png`;
-            if (raidCard.classList.contains('multiple-girl')) {
+            if (love_raids[i].girl_data.grade_skins.length) {
+                if (!raidCard.classList.contains('multiple-girl')) {
+                    raidCard.classList.add('multiple-girl');
+                    raidCard.classList.remove('single-girl');
+                    $(raidCard).find('div.raid-content')
+                        .append($(`
+                        <div class="right-girl-container">
+                            <img class="girl-img right" src="" alt="Right">
+                        </div>
+                        `));
+                    $(raidCard).find('.info-box .info-container .classic-girl')
+                        .after($(`
+                        <div class="classic-girl">
+                            <div class="shards-container">
+                                <div class="progress-container">
+                                    <div class="shards_bar_wrapper">
+                                        <div class="shards">
+                                            <span class="skins_shard_icn"></span>
+                                            <p><span>?/33</span></p>
+                                        </div>
+                                        <div class="shards_bar skins-shards">
+                                            <div class="bar basic-progress-bar-fill pink" style="width: 0"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <a href="" class="redirect_button blue_button_L" disabled="">Go</a>
+                            </div>
+                            <div class="border-bottom"></div>
+                        </div>`));
+                }
                 const rightImage = raidCard.querySelector('.girl-img.right');
                 if (!rightImage.src.includes('grade_skins')) {
                     // there is no good way to tell which skin it will be so this will always show the first
@@ -1165,11 +1187,16 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             raidCard.querySelectorAll('.girl-img').forEach((img) => {
                 if (img.style.visibility === 'hidden') {
                     img.style.visibility = 'visible';
-                    if (grade_offsets.length) {
-                        img.style.marginTop = `-${grade_offsets[0][0]/7}px`;
-                    }
                 }
             });
+
+            const objectives = raidCard.querySelectorAll('.classic-girl');
+            const girl = objectives[0];
+            const skin = objectives[1];
+
+            // fill names on mysterious girls and make all names link to the wiki
+            raidCard.querySelector('.raid-name span span').innerText = `${name} ${GT_design_love_raid}`;
+            girl.querySelector('.girl-name').innerHTML = `<a href="${wikiLink}" target="_blank">${name}</a>`;
 
             // add go buttons if there aren't any
             addMissingGoButton(girl);
