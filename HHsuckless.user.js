@@ -1139,21 +1139,24 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 log('HH++ is missing info, scroll through whole harem to update!');
                 return;
             }
-            const {name, shards, grade_offsets} = girls[i];
-            const haremLink = getHref(`/characters/${love_raids[i].id_girl}`);
-            const wikiLink = getWikiLink(name, love_raids[i].id_girl, getLang());
+            const { name, shards } = girls[i];
+            const { id_girl, girl_data: { grade_skins } } = love_raids[i];
+
+            const haremLink = getHref(`/characters/${id_girl}`);
+            const wikiLink = getWikiLink(name, id_girl, getLang());
 
             // replace shadow poses
             const leftImage = raidCard.querySelector('.girl-img.left');
-            leftImage.src = `${getCDNHost()}/pictures/girls/${love_raids[i].id_girl}/ava0.png`;
-            if (love_raids[i].girl_data.grade_skins.length) {
+            leftImage.src = `${getCDNHost()}/pictures/girls/${id_girl}/ava0.png`;
+            if (grade_skins.length) {
                 if (!raidCard.classList.contains('multiple-girl')) {
                     raidCard.classList.add('multiple-girl');
                     raidCard.classList.remove('single-girl');
                     $(raidCard).find('div.raid-content')
                         .append($(`
                         <div class="right-girl-container">
-                            <img class="girl-img right" src="" alt="Right">
+                            <img class="girl-img right" src="" alt="Right" 
+                                 style="margin-top: ${leftImage.style.marginTop}">
                         </div>
                         `));
                     $(raidCard).find('.info-box .info-container .classic-girl')
@@ -1179,7 +1182,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 const rightImage = raidCard.querySelector('.girl-img.right');
                 if (!rightImage.src.includes('grade_skins')) {
                     // there is no good way to tell which skin it will be so this will always show the first
-                    rightImage.src = `${getCDNHost()}/pictures/girls/${love_raids[i].id_girl}/grade_skins/grade_skin1.png`;
+                    rightImage.src = `${getCDNHost()}/pictures/girls/${id_girl}/grade_skins/grade_skin1.png`;
                 }
             }
 
