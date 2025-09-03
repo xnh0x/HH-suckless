@@ -926,61 +926,66 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
 
         function popCollect() {
-            let navigationTriggered = false;
-            document.addEventListener('keydown', (e) => {
+            $(document).on('keydown', (e) => {
                 if (!window.location.search.includes('tab=pop')) {
                     return;
                 }
-                if (!navigationTriggered && e.key === ' ') {
+                if (e.key === ' ') {
                     const $claimGirlButton = $('#claim-reward');
                     if ($claimGirlButton.length) {
-                        clickOnElement($claimGirlButton[0]);
+                        clickOnElement($claimGirlButton.get(0));
                         return;
                     }
                     const $okButton = $('#rewards_popup button.blue_button_L[confirm_blue_button]');
                     if ($okButton.length) {
-                        clickOnElement($okButton[0]);
+                        clickOnElement($okButton.get(0));
                         return;
                     }
-                    const $claimButtons = $('button.purple_button_L[rel=pop_thumb_claim][style!="display:none"]');
+                    const $claimButtons = $('button.purple_button_L[rel=pop_thumb_claim][style="display:block"]');
                     if ($claimButtons.length) {
                         if (!$claimButtons.first().attr('disabled')) {
-                            clickOnElement($claimButtons[0]);
+                            delete unsafeWindow['activities']['PlacesOfPower']['POP_RELOAD'];
+                            unsafeWindow['activities']['PlacesOfPower']['POP_RELOAD'] = false;
+                            clickOnElement($claimButtons.get(0));
+                            // wait for the reward popup to re-enable POP_RELOAD
+                            doWhenSelectorAvailable('#rewards_popup button.blue_button_L[confirm_blue_button]',
+                                () => { unsafeWindow['activities']['PlacesOfPower']['POP_RELOAD'] = true });
                         }
                         return;
                     }
                     const $visitButtons = $('button.blue_button_L[rel=pop_thumb_info][style!="display:none"]');
-                    clickOnElement($visitButtons[0]);
-                    navigationTriggered = true;
+                    clickOnElement($visitButtons.get(0));
+                    $(document).off('keydown');
                 }
             });
         }
 
         function popAssign() {
-            let navigationTriggered = false;
-            document.addEventListener('keydown', (e) => {
+            $(document).on('keydown', (e) => {
                 if (!window.location.search.includes('tab=pop')) {
                     return;
                 }
-                if (!navigationTriggered && e.key === ' ') {
+                if (e.key === ' ') {
                     if (Object.values(pop_data).reduce((inactive, pop)=>{ return inactive + (pop.time_to_finish === 0) }, 0) === 0) {
                         // nothing else to assign, go home
-                        clickOnElement($(`header > a.hh_logo img`)[0]);
-                        navigationTriggered = true;
+                        clickOnElement($(`header > a.hh_logo img`).get(0));
+                        $(document).off('keydown');
                         return;
                     }
                     const $assignButton = $('.pop-quick-nav button[rel=pop_auto_assign]');
                     if (!$assignButton.attr('disabled')) {
-                        clickOnElement($assignButton[0]);
+                        clickOnElement($assignButton.get(0));
+                        $assignButton.attr('disabled', '');
                         return;
                     }
                     const $startButton = $('.pop_central_part button[rel=pop_action]');
                     if (!$startButton.attr('disabled')) {
-                        clickOnElement($startButton[0]);
+                        clickOnElement($startButton.get(0));
+                        $startButton.attr('disabled', '');
                         return;
                     }
-                    clickOnElement($('.pop-quick-nav a .pop-quick-nav-next')[0]);
-                    navigationTriggered = true;
+                    clickOnElement($('.pop-quick-nav a .pop-quick-nav-next').get(0));
+                    $(document).off('keydown');
                 }
             });
         }
