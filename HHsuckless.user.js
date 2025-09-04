@@ -79,7 +79,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     const CALENDAR_URL = {
-        HH: 'https://blog.kinkoid.com/wp-content/uploads/2025/01/image5-4-1024x576.jpg',
+        HH: 'https://raw.githubusercontent.com/xnh0x/HH-suckless/refs/heads/master/calendar/HH.png',
     };
 
     const CONFIG = loadConfig();
