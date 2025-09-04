@@ -727,7 +727,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function home() {
-        setNonCompletedRaidCounts();
+        if (CONFIG.raid.enabled) {
+            setNonCompletedRaidCounts();
+        }
 
         if (CONFIG.news.enabled) {
             preventAutoPopup(['.info-container .chest-container', '.currency plus', '#mc-selector'], '#shop-payment-tabs', '#common-popups close');
