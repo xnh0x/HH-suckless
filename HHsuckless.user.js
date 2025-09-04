@@ -53,6 +53,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             Helpers: {
                 doWhenSelectorAvailable,
                 getCDNHost,
+                getGameKey,
                 getGirlDictionary,
                 getHref,
                 getWikiLink,
@@ -76,6 +77,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         seasonal: 'HHsucklessSeasonal',
         seasonChanceThreshold: 'HHsucklessSeasonChanceThreshold',
     }
+
+    const CALENDAR_URL = {
+        HH: 'https://blog.kinkoid.com/wp-content/uploads/2025/01/image5-4-1024x576.jpg',
+    };
 
     const CONFIG = loadConfig();
 
@@ -231,6 +236,13 @@ const local_now_ts = Math.floor(Date.now() / 1000);
      * - disable fade transition when opening the navigation menu
      */
     mainMenu();
+
+    /*
+     * add the monthly calendar to the menu
+     */
+    if (getGameKey() in CALENDAR_URL) {
+        doWhenSelectorAvailable(`nav div[rel='content'] > div`, calendar);
+    }
 
     if (window.location.pathname === '/home.html') {
         /*
@@ -724,6 +736,74 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         doWhenSelectorAvailable('#contains_all > nav > [rel="content"] > div', () => {
             $('#contains_all > nav > [rel="content"] > div')[0].style.transition = 'none';
         });
+    }
+
+    function calendar() {
+        addCalendarCSS();
+
+        const calendarURL = CALENDAR_URL[getGameKey()];
+        const $commonPopups = $('#common-popups');
+        const $menu = $(`nav div[rel='content'] > div`);
+
+        const $calendarMenuItem = $(`
+            <a><div><ic class="calendar"></ic><span>Calendar</span></div></a>
+        `);
+        $menu.prepend($calendarMenuItem);
+
+        const $calendarPopup = $(`
+            <div class="popup_wrapper">
+                <div class="popup_background clickable"></div>
+                <div id="popup_calendar" class="popup">
+                    <div class="calendar_container container-special-bg">
+                        <img src="${calendarURL}" alt="calendar">
+                    </div>
+                    <close class="closable"></close>
+                </div>
+            </div>
+        `);
+
+        $calendarMenuItem.on('click', () => {
+            clickOnElement($(`nav div[rel='open']`).get(0));
+            $commonPopups.css('display', 'block');
+            $commonPopups.append($calendarPopup);
+
+            $calendarPopup.find('close').on('click', () => {
+                $commonPopups.css('display', 'none');
+                $calendarPopup.remove();
+            });
+        });
+
+        function addCalendarCSS() {
+            let sheet = document.createElement("style");
+            sheet.textContent = `
+                #contains_all > nav ic.calendar {
+                    background-image: url(https://raw.githubusercontent.com/xnh0x/HH-suckless/refs/heads/master/icon/calendar_month.svg);
+                }
+                .popup_wrapper #popup_calendar {
+                    width: 1020px;
+                    height: 550px;
+                    top: 0.62rem;
+                    left: 0.62rem;
+                }
+                .popup_wrapper #popup_calendar close {
+                    width: 2.4rem;
+                    height: 2.2rem;
+                    background-image: url(/images/clubs/ic_xCross.png);
+                    opacity: 1;
+                }
+                .popup_wrapper #popup_calendar .calendar_container {
+                    width: 100%;
+                    height: 100%;
+                    box-shadow: none;
+                    border: 2px solid #ff9900;
+                    align-content: center;
+                }
+                .calendar_container img {
+                    height: 90%;
+                }
+            `;
+            document.head.appendChild(sheet);
+        }
     }
 
     function home() {
