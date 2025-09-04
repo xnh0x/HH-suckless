@@ -779,6 +779,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 #contains_all > nav ic.calendar {
                     background-image: url(https://raw.githubusercontent.com/xnh0x/HH-suckless/refs/heads/master/icon/calendar_month.svg);
                 }
+                #contains_all > nav a {
+                    cursor: pointer;
+                }
                 .popup_wrapper #popup_calendar {
                     width: 1020px;
                     height: 550px;
