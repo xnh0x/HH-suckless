@@ -64,6 +64,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         },
         hhPlusPlusConfig,
         server_now_ts,
+        shared: {
+            HHMenu
+        }
     } = unsafeWindow;
 
     const LS = {
@@ -763,7 +766,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         `);
 
         $calendarMenuItem.on('click', () => {
-            clickOnElement($(`nav div[rel='open']`).get(0));
+            HHMenu.hideMenu();
             $commonPopups.css('display', 'block');
             $commonPopups.append($calendarPopup);
 
