@@ -1317,6 +1317,12 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         // zoo's eye buttons are now obsolete
         document.querySelectorAll('.raid-card .eye').forEach(e => e.remove());
 
+        if (CONFIG.raid.hideOwned) {
+            const sheet = document.createElement("style");
+            sheet.textContent = `.raid-card.grey-overlay { display: none !important; }`;
+            document.head.appendChild(sheet);
+        }
+
         function addMissingGoButton(e) {
             if (e && !e.querySelectorAll('.redirect_button').length) {
                 const button = document.createElement('a');
@@ -2020,7 +2026,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             quest:
                 { enabled: true, highRes: true, nav: true },
             raid:
-                { enabled: true },
+                { enabled: true , hideOwned: false },
             champ:
                 { enabled: false, fade: false, noRaid: false },
             villain:
@@ -2131,10 +2137,16 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 baseKey: 'raid',
                 label: 'additional raid card tweaks',
                 default: true,
+                subSettings: [
+                    { key: 'hideOwned', default: false,
+                        label: 'hide cards of completed raids',
+                    },
+                ],
             },
-            run() {
+            run(subSettings) {
                 config.raid = {
                     enabled: true,
+                    hideOwned: subSettings.hideOwned,
                 };
             },
         });
