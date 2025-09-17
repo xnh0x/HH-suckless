@@ -1072,8 +1072,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                         $startButton.attr('disabled', '');
                         return;
                     }
-                    clickOnElement($('.pop-quick-nav a .pop-quick-nav-next').get(0));
-                    $(document).off('keydown');
+                    if ($('.pop_central_part button[rel=pop_finish]').css('display') !== 'none') {
+                        clickOnElement($('.pop-quick-nav a .pop-quick-nav-next').get(0));
+                        $(document).off('keydown');
+                    }
                 }
             });
         }
