@@ -6,8 +6,10 @@
 // @match        https://*.hentaiheroes.com/*
 // @match        https://nutaku.haremheroes.com/*
 // @match        https://*.comixharem.com/*
-// @match        https://*.pornstarharem.com/*
 // @match        https://*.gayharem.com/*
+// @match        https://*.pornstarharem.com/*
+// @match        https://*.gaypornstarharem.com/*
+// @match        https://*.transpornstarharem.com/*
 // @run-at       document-idle
 // @namespace    https://github.com/xnh0x/HH-suckless
 // @updateURL    https://github.com/xnh0x/HH-suckless/raw/refs/heads/master/HHsuckless.user.js
