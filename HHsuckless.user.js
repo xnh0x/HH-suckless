@@ -825,13 +825,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             preventAutoPopup(['#news_button'], '#news_details_popup', '#common-popups close');
         }
 
-        if (CONFIG.pov.enabled) {
-            addPovTimer(LS.pov, 'path-of-valor', 'pov_timer', 14 * 24 * 60 * 60);
-        }
-
-        if (CONFIG.pog.enabled) {
-            addPovTimer(LS.pog, 'path-of-glory', 'pog_timer', 35 * 24 * 60 * 60);
-        }
+        addPovTimer(LS.pov, 'path-of-valor', 'pov_timer', 14 * 24 * 60 * 60);
+        addPovTimer(LS.pog, 'path-of-glory', 'pog_timer', 35 * 24 * 60 * 60);
 
         if (CONFIG.noWBT.enabled) {
             $(`div.world-boss`).remove();
