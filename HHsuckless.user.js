@@ -457,6 +457,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     if (window.location.pathname === '/edit-team.html') {
         /*
          * - fill team from list
+         * - copy current team list
          */
         if (CONFIG.editTeam.enabled) {
             await editTeam();
