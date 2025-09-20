@@ -87,7 +87,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     const CONFIG = loadConfig();
 
-    log('config:', CONFIG);
+    debug('config:', CONFIG);
 
     class FavoriteLabGirls {
         constructor() {
@@ -1903,6 +1903,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     function log(...args) {
         console.log('HH suckless:', ...args);
+    }
+
+    function debug(...args) {
+        console.debug('HH suckless:', ...args);
     }
 
     function capitalize(val) {
