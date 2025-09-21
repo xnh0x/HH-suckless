@@ -1382,12 +1382,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
             addSECSS();
 
-            if (CONFIG.seasonal.hideSeasonalEventBonusPath) {
-                $('#get_mega_pass_kobans_btn').attr('disabled', '');
-                doWhenSelectorAvailable('#pass_reminder_popup close', () => {
-                    clickOnElement($('#pass_reminder_popup close')[0]);
-                });
-            }
+            preventAutoPopup(['a.pass-reminder'], '#pass_reminder_popup', '#pass_reminder_popup close');
 
             if (seasonalData.new) {
                 seasonalData = { type: 1, new: false,
@@ -1977,6 +1972,20 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         girlList.find(e => e.id_girl === +id).power_display = favorites.isFavorite(id)
             ? 1e7 // just a high number to ensure the favorites are picked by auto-assign
             : +girlElement.querySelector('.girl-power-number').getAttribute('value');
+    }
+
+    function preventAutoPopup(manualButtons, check, close) {
+        let manualClick = false;
+        for (const button of manualButtons) {
+            $(button).on('click', () => {
+                manualClick = true;
+            });
+        }
+        doWhenSelectorAvailable(check, ()=>{
+            if (!manualClick) {
+                clickOnElement($(close)[0]);
+            }
+        });
     }
 
     function runOnChange(selectors, func) {
