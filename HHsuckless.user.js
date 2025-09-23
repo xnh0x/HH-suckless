@@ -346,6 +346,15 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
     }
 
+    if (window.location.pathname === '/season.html') {
+        /*
+         * - hide raid card if completed
+         */
+        if (CONFIG.season.enabled) {
+            season();
+        }
+    }
+
     if (window.location.pathname === '/season-arena.html') {
         /*
          * - swap the best opponent to the left
@@ -1187,6 +1196,17 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     function pantheonBattle() {
         skipBattle();
+    }
+
+    function season() {
+        hideCompletedRaid();
+
+        function hideCompletedRaid() {
+            /*global love_raids*/
+            if (love_raids && love_raids[0].all_is_owned) {
+                $('a.love-raid-container.raid').remove();
+            }
+        }
     }
 
     function seasonArena() {
