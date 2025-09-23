@@ -948,20 +948,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 setInterval(handler, 1000);
             }
         }
-
-        function preventAutoPopup(manualButtons, check, close) {
-            let manualClick = false;
-            for (const button of manualButtons) {
-                $(button).on('click', () => {
-                    manualClick = true;
-                });
-            }
-            doWhenSelectorAvailable(check, ()=>{
-                if (!manualClick) {
-                    clickOnElement($(close)[0]);
-                }
-            });
-        }
     }
 
     function championsMap() {
@@ -1628,6 +1614,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 claimAll.querySelector('#claim-all').style.display = 'none';
             }
         });
+        preventAutoPopup(['button.purchase-pass'], '#pov_pog_passes_popup', '#pov_pog_passes_popup close');
     }
 
     function labyrinthPoolSelect() {
