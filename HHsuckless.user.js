@@ -76,6 +76,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         labShopCycleEnd: 'HHsucklessLabShopCycleEnd',
         labShopStock: 'HHsucklessLabShopStock',
         loveRaids: 'HHsucklessLoveRaids',
+        loveRaidsNotifications: 'HHsucklessLoveRaidsNotifications',
         pog: 'HHsucklessPoG',
         popData: 'HHsucklessPopData',
         pov: 'HHsucklessPoV',
@@ -382,6 +383,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
          *     names, shards, images
          * - adds wiki links to the orange names
          * - makes go buttons link to harem if you already own the girl
+         * - add notification toggles to show a reminder on the homepage
+         *     if a specific raid is active
          */
         if (CONFIG.raid.enabled) {
             await loveRaids();
@@ -836,6 +839,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     function home() {
         if (CONFIG.raid.enabled) {
             setNonCompletedRaidCounts();
+            setRaidNotification();
         }
 
         if (CONFIG.news.enabled) {
@@ -856,23 +860,51 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
         function setNonCompletedRaidCounts() {
             const raids = JSON.parse(localStorage.getItem(LS.loveRaids));
+            const { ongoing_love_raids_count, upcoming_love_raids_count } = unsafeWindow;
             if (!raids) return;
-            const outdated = (server_now_ts - raids.checked > 24 * 60 * 60);
-            let ongoing = 0, upcoming = 0;
-            raids.times.forEach((time) => {
-                if (time.start < server_now_ts) {
-                    if (time.end > server_now_ts) {
-                        ongoing += 1;
-                    }
+            let expired = 0, ongoing = 0, upcoming = 0;
+            raids.forEach((raid) => {
+                if (raid.end < server_now_ts) {
+                    expired += 1;
+                } else if (raid.all_is_owned) {
+                    // don't care
+                } else if (raid.start < server_now_ts) {
+                    ongoing += 1;
                 } else {
                     upcoming += 1;
                 }
             });
+            const outdated = raids.length - expired < ongoing_love_raids_count + upcoming_love_raids_count;
             const $raidAmounts = $(`.raids .raids-amount`);
             $raidAmounts.first().html(
                 `<span ${outdated ? 'style="color:pink"' : ''}>${ongoing}</span> ${GT_design_raids_ongoing}`);
             $raidAmounts.last().html(
                 `<span ${outdated ? 'style="color:pink"' : ''}>${upcoming}</span> ${GT_design_upcoming_love_raids}`);
+        }
+
+        function setRaidNotification() {
+            const raids = JSON.parse(localStorage.getItem(LS.loveRaids));
+            const raidNotifs = JSON.parse(localStorage.getItem(LS.loveRaidsNotifications));
+            log(raidNotifs)
+            if (!raids || !raidNotifs) return;
+
+            log(raidNotifs)
+            const showNotif = raids.reduce((result, raid) => {
+                const ongoing = raid.start < server_now_ts && raid.end > server_now_ts;
+                log(ongoing, raid.id_raid, raidNotifs.includes(raid.id_raid))
+                if (ongoing && raidNotifs.includes(raid.id_raid)) {
+                    if (raid.end > server_now_ts) {
+                        return true;
+                    }
+                }
+                return result;
+            }, false);
+
+            if (showNotif) {
+                $(`.raids`).append(`
+                    <img class="new_notif" src="${getCDNHost()}/ic_new.png" style="position: relative;" alt="!">
+                `);
+            }
         }
 
         function addPovTimer(storageKey, rel, id, increment) {
@@ -1302,21 +1334,20 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         // save raid times for home page counts
         localStorage.setItem(LS.loveRaids,
             JSON.stringify(love_raids.reduce((result, raid) => {
-                if (!raid['all_is_owned']) {
-                    let start, end;
-                    if (raid['status'] === 'ongoing') {
-                        const { seconds_until_event_end } = raid;
-                        start = 0; // irrelevant since it is running
-                        end = server_now_ts + seconds_until_event_end;
-                    } else {
-                        const { event_duration_seconds, seconds_until_event_start } = raid;
-                        start = server_now_ts + seconds_until_event_start;
-                        end = start + event_duration_seconds;
-                    }
-                    result.times.push({ start, end });
+                const { id_raid, all_is_owned } = raid;
+                let start, end;
+                if (raid['status'] === 'ongoing') {
+                    const { seconds_until_event_end } = raid;
+                    start = 0; // irrelevant since it is running
+                    end = server_now_ts + seconds_until_event_end;
+                } else {
+                    const { event_duration_seconds, seconds_until_event_start } = raid;
+                    start = server_now_ts + seconds_until_event_start;
+                    end = start + event_duration_seconds;
                 }
+                result.push({ all_is_owned, id_raid, start, end });
                 return result;
-            }, { checked: server_now_ts, times: []}))
+            }, []))
         );
 
         const girls = await getGirlDictionary()
@@ -1412,10 +1443,69 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         // zoo's eye buttons are now obsolete
         document.querySelectorAll('.raid-card .eye').forEach(e => e.remove());
 
+        addNotificationToggle();
+
         if (CONFIG.raid.hideOwned) {
             const sheet = document.createElement("style");
             sheet.textContent = `.raid-card.grey-overlay { display: none !important; }`;
             document.head.appendChild(sheet);
+        }
+
+        function addNotificationToggle() {
+            addCSS();
+            const raidNotifs = JSON.parse(localStorage.getItem(LS.loveRaidsNotifications)) || [];
+            $('.raid-card:not(.grey-overlay)').each(function () {
+                const id_raid = +$(this).attr('id_raid');
+                const $raidName = $(this).find('.raid-name');
+                $raidName.attr('data-notify', raidNotifs.includes(id_raid).toString())
+                const $notifyToggle = $(`<span class="notify-toggle"></span>`);
+                $raidName.append($notifyToggle);
+                $raidName.on('click', (event) => {
+                    event.stopPropagation();
+                    const i = raidNotifs.indexOf(id_raid);
+                    if (i > -1) {
+                        raidNotifs.splice(i, 1);
+                        $raidName.attr('data-notify', 'false');
+                    } else {
+                        raidNotifs.push(id_raid);
+                        $raidName.attr('data-notify', 'true');
+                    }
+                    localStorage.setItem(LS.loveRaidsNotifications,
+                        JSON.stringify(raidNotifs));
+                    log(raidNotifs)
+                });
+            });
+
+            function addCSS() {
+                let sheet = document.createElement("style");
+                sheet.textContent = `
+                    #love-raids .raid-card:not(.expanded) .raid-content .info-box {
+                        padding-top: 0;
+                        top: 4.8em;
+                    }
+                    
+                    #love-raids .raid-card:not(.expanded).multiple-girl .raid-content .info-box .classic-girl:nth-of-type(2) .shards-container {
+                        top: 0;
+                    }
+                    .notify-toggle {
+                        position: relative;
+                        display: inline-block;
+                        height: 25px;
+                        width: 25px;
+                        background-image: url('${getCDNHost()}/ic_new.png');
+                        background-size: contain;
+                        background-repeat: no-repeat;
+                        background-position: center;
+                        opacity: 0.5;
+                        filter: grayscale(1);
+                    }
+                    .raid-name[data-notify="true"] .notify-toggle {
+                        opacity: 1;
+                        filter: grayscale(0);
+                    }
+                `;
+                document.head.appendChild(sheet);
+            }
         }
 
         function addMissingGoButton(e) {
