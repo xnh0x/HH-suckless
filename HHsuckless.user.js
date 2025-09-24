@@ -2362,7 +2362,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             group: 'suckless',
             configSchema: {
                 baseKey: 'season',
-                label: 'improved season fights (requires Rena\'s sim)',
+                label: 'improved season',
                 default: true,
                 subSettings: [
                     { key: 'useThreshold', default: false,
