@@ -885,10 +885,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         function setRaidNotification() {
             const raids = JSON.parse(localStorage.getItem(LS.loveRaids));
             const raidNotifs = JSON.parse(localStorage.getItem(LS.loveRaidsNotifications));
-            log(raidNotifs)
             if (!raids || !raidNotifs) return;
-
-            log(raidNotifs)
             const showNotif = raids.reduce((result, raid) => {
                 const ongoing = raid.start < server_now_ts && raid.end > server_now_ts;
                 log(ongoing, raid.id_raid, raidNotifs.includes(raid.id_raid))
@@ -1472,7 +1469,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     }
                     localStorage.setItem(LS.loveRaidsNotifications,
                         JSON.stringify(raidNotifs));
-                    log(raidNotifs)
                 });
             });
 
