@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         HH suckless
-// @version      0.31.1
+// @version      0.31.2
 // @description  HH that sucks less. Requires HH++ BDSM and Rena's Battle Sim.
 // @author       xnh0x
 // @match        https://*.hentaiheroes.com/*
@@ -888,7 +888,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             if (!raids || !raidNotifs) return;
             const showNotif = raids.reduce((result, raid) => {
                 const ongoing = raid.start < server_now_ts && raid.end > server_now_ts;
-                log(ongoing, raid.id_raid, raidNotifs.includes(raid.id_raid))
                 if (ongoing && raidNotifs.includes(raid.id_raid)) {
                     if (raid.end > server_now_ts) {
                         return true;
