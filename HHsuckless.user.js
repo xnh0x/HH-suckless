@@ -888,7 +888,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             if (!raids || !raidNotifs) return;
             const showNotif = raids.reduce((result, raid) => {
                 const ongoing = raid.start < server_now_ts && raid.end > server_now_ts;
-                if (ongoing && raidNotifs.includes(raid.id_raid)) {
+                if (ongoing && raidNotifs.includes(raid.id_raid) && !raid.all_is_owned) {
                     if (raid.end > server_now_ts) {
                         return true;
                     }
