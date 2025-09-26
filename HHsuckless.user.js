@@ -1456,7 +1456,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 $raidName.attr('data-notify', raidNotifs.includes(id_raid).toString())
                 const $notifyToggle = $(`<span class="notify-toggle"></span>`);
                 $raidName.append($notifyToggle);
-                $raidName.on('click', (event) => {
+                $notifyToggle.on('click', (event) => {
                     event.stopPropagation();
                     const i = raidNotifs.indexOf(id_raid);
                     if (i > -1) {
