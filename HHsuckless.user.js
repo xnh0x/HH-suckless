@@ -1232,16 +1232,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         function hideCompletedRaid() {
             /*global love_raids*/
             $('a.love-raid-container.raid').each(function() {
-                const secondsEnd = $(this)
-                    .find('.raid.raid-event-timer.timer')
-                    .attr('data-time');
-                const imageUrl = $(this).css('background-image');
-                const raid = love_raids.find(raid =>
-                    raid['seconds_until_event_end'] === +secondsEnd
-                    // just in case both end at the same time, if they also
-                    // have the same background there is no way to tell which is which
-                    && imageUrl.includes(`/${raid['background_id']}.`));
-                if (raid && raid.all_is_owned) {
+                const id = +URL.parse(this.href).searchParams.get('raid');
+                const raid = love_raids.find(raid => raid.id_raid === id);
+                if (raid.all_is_owned) {
                     $(this).remove();
                 }
             });
