@@ -84,8 +84,14 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         seasonChanceThreshold: 'HHsucklessSeasonChanceThreshold',
     }
 
+    const CALENDAR_PATH = 'https://raw.githubusercontent.com/xnh0x/HH-suckless/refs/heads/master/calendar';
     const CALENDAR_URL = {
-        HH: 'https://raw.githubusercontent.com/xnh0x/HH-suckless/refs/heads/master/calendar/HH.png',
+        HH: `${CALENDAR_PATH}/HH.png`,
+        GH: `${CALENDAR_PATH}/GH.png`,
+        CxH: `${CALENDAR_PATH}/CxH.png`,
+        PSH: `${CALENDAR_PATH}/PSH.png`,
+        GPSH: `${CALENDAR_PATH}/GPSH.png`,
+        TPSH: `${CALENDAR_PATH}/TPSH.png`,
     };
 
     const CONFIG = loadConfig();
