@@ -84,16 +84,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         seasonChanceThreshold: 'HHsucklessSeasonChanceThreshold',
     }
 
-    const CALENDAR_PATH = 'https://raw.githubusercontent.com/xnh0x/HH-suckless/refs/heads/master/calendar';
-    const CALENDAR_URL = {
-        HH: `${CALENDAR_PATH}/HH.png`,
-        GH: `${CALENDAR_PATH}/GH.png`,
-        CxH: `${CALENDAR_PATH}/CxH.png`,
-        PSH: `${CALENDAR_PATH}/PSH.png`,
-        GPSH: `${CALENDAR_PATH}/GPSH.png`,
-        TPSH: `${CALENDAR_PATH}/TPSH.png`,
-    };
-
     const CONFIG = loadConfig();
 
     debug('config:', CONFIG);
@@ -252,9 +242,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     /*
      * add the monthly calendar to the menu
      */
-    if (getGameKey() in CALENDAR_URL) {
-        doWhenSelectorAvailable(`nav div[rel='content'] > div`, calendar);
-    }
+    doWhenSelectorAvailable(`nav div[rel='content'] > div`, calendar);
 
     if (window.location.pathname === '/home.html') {
         /*
@@ -774,7 +762,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     function calendar() {
         addCalendarCSS();
 
-        const calendarURL = CALENDAR_URL[getGameKey()];
+        const calendarURL = `https://raw.githubusercontent.com/xnh0x/HH-suckless/refs/heads/master/calendar${getGameKey()}`;
         const $commonPopups = $('#common-popups');
         const $menu = $(`nav div[rel='content'] > div`);
 
