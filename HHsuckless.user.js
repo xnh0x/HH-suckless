@@ -762,7 +762,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     function calendar() {
         addCalendarCSS();
 
-        const calendarURL = `https://raw.githubusercontent.com/xnh0x/HH-suckless/refs/heads/master/calendar${getGameKey()}`;
+        const calendarURL = `https://raw.githubusercontent.com/xnh0x/HH-suckless/refs/heads/master/calendar/${getGameKey()}.png`;
         const $commonPopups = $('#common-popups');
         const $menu = $(`nav div[rel='content'] > div`);
 
