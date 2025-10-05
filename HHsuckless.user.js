@@ -1187,6 +1187,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     function trollPreBattle() {
         // space key starts single battle
+        if (!shared.Hero.energies.fight.amount) { return; }
         document.addEventListener('keydown', (e) => {
             if (e.key === ' ') {
                 clickOnElement(document.querySelector(`.battle-buttons .single-battle-button`));
@@ -1209,6 +1210,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     function pantheonPreBattle() {
         // space key starts single battle
+        if (!shared.Hero.energies.worship.amount) { return; }
         document.addEventListener('keydown', (e) => {
             if (e.key === ' ') {
                 clickOnElement(document.querySelector(`.battle-buttons .pantheon-single-battle-button`));
@@ -1282,7 +1284,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             }
 
             // space key starts battle against the best opponent
-            if (!(CONFIG.season.useThreshold && mainCriterion[best] < CONFIG.season.threshold)) {
+            if (shared.Hero.energies.kiss.amount
+                && !(CONFIG.season.useThreshold && mainCriterion[best] < CONFIG.season.threshold)) {
                 document.addEventListener('keydown', (e) => {
                     if (e.key === ' ') {
                         clickOnElement(bestOpponent.querySelector(`.green_button_L.btn_season_perform`));
