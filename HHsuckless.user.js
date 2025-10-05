@@ -1236,16 +1236,15 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function seasonArena() {
-        const observer = new MutationObserver(async () => {
-            if (document.querySelectorAll('.sim-chance').length === 3) {
-                observer.disconnect();
-                sortOpponents();
-            }
-        });
-
         // try to sort immediately and enable the observer in case rena's results weren't available yet
         if (!sortOpponents()) {
             log('waiting for rena');
+            const observer = new MutationObserver(async () => {
+                if (document.querySelectorAll('.sim-chance').length === 3) {
+                    observer.disconnect();
+                    sortOpponents();
+                }
+            });
             observer.observe(document, {childList: true, subtree: true});
         }
 
