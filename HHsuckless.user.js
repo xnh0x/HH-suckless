@@ -59,6 +59,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 getGirlDictionary,
                 getHref,
                 getWikiLink,
+                onAjaxResponse,
             },
             I18n: {
                 getLang,
@@ -1303,32 +1304,34 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function skipBattle() {
-        // space key skips battle, a second press accepts the results
-        let skipClicked = false, okClicked = false, claimClicked = false;
-        $(document).on('keydown', (e) => {
-            if (e.key === ' ') {
-                log(claimClicked, okClicked, skipClicked)
-                if (claimClicked) { return; }
-                const $claimGirlButton = $('#claim-reward');
-                if ($claimGirlButton.length) {
-                    clickOnElement($claimGirlButton.get(0));
-                    claimClicked =  true;
-                    return;
+        // wait for the battle result
+        onAjaxResponse(/action=do_battles_/, (response, opt) => {
+            // space key skips battle, a second press accepts the results
+            let skipClicked = false, okClicked = false, claimClicked = false;
+            $(document).on('keydown', (e) => {
+                if (e.key === ' ') {
+                    if (claimClicked) { return; }
+                    const $claimGirlButton = $('#claim-reward');
+                    if ($claimGirlButton.length) {
+                        clickOnElement($claimGirlButton.get(0));
+                        claimClicked =  true;
+                        return;
+                    }
+                    if (okClicked) { return; }
+                    const $okButton = $('#rewards_popup button.blue_button_L:not(.play-again)');
+                    if ($okButton.length) {
+                        clickOnElement($okButton.get(0));
+                        okClicked =  true;
+                        return;
+                    }
+                    if (skipClicked) { return; }
+                    const $skipButton = $('#new-battle-skip-btn');
+                    if ($skipButton.length && $skipButton.css('display') !== 'none') {
+                        clickOnElement($skipButton.get(0));
+                        skipClicked = true;
+                    }
                 }
-                if (okClicked) { return; }
-                const $okButton = $('#rewards_popup button.blue_button_L[confirm_blue_button]');
-                if ($okButton.length) {
-                    clickOnElement($okButton.get(0));
-                    okClicked =  true;
-                    return;
-                }
-                if (skipClicked) { return; }
-                const $skipButton = $('#new-battle-skip-btn');
-                if ($skipButton.length && $skipButton.css('display') !== 'none') {
-                    clickOnElement($skipButton.get(0));
-                    skipClicked = true;
-                }
-            }
+            });
         });
     }
 
