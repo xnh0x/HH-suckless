@@ -245,6 +245,13 @@ const local_now_ts = Math.floor(Date.now() / 1000);
      */
     doWhenSelectorAvailable(`nav div[rel='content'] > div`, calendar);
 
+    /*
+     * - indicators for hero equipment resonance
+     */
+    if (CONFIG.heroEquip.enabled) {
+        addHeroEquipResonanceIndicators();
+    }
+
     if (window.location.pathname === '/home.html') {
         /*
          * - the automatic shop and news popup can fuck off forever
@@ -255,15 +262,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
          * - reduce love raid counters to exclude completed raids
          */
         home();
-    }
-
-    if (window.location.pathname === '/shop.html') {
-        /*
-         * - indicators for hero equipment resonance
-         */
-        if (CONFIG.shop.enabled) {
-            shop();
-        }
     }
 
     if (window.location.pathname === '/champions-map.html') {
@@ -831,6 +829,93 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
     }
 
+    function addHeroEquipResonanceIndicators() {
+        const wrongClass = 'url("/images/caracs/no_class.png")';
+        const resonance1 = {
+            damage: 'url("/images/caracs/damage.png")',
+            ego: 'url("/images/caracs/ego.png")',
+        }
+        const resonance2 = {
+            defense: 'url("/images/caracs/deff_undefined.png")',
+            chance: 'url("/images/pictures/misc/items_icons/5.png")',
+        }
+        const colors = {
+            darkness: '#434343',
+            fire: '#a61c00',
+            nature: '#38761d',
+            stone: '#b45f06',
+            sun: '#ffd966',
+            water: '#1155cc',
+            light: '#f3f3f3',
+            psychic: '#674ea7',
+        }
+        const rainbow = 'linear-gradient(0deg, rgba(255,0,0,1) 0%, rgba(255,154,0,1) 11%, rgba(208,222,33,1) 22%, rgba(79,220,74,1) 33%, rgba(63,218,216,1) 44%, rgba(47,201,226,1) 55%, rgba(28,127,238,1) 66%, rgba(95,21,242,1) 77%, rgba(186,12,248,1) 88%, rgba(251,7,217,1) 99%)';
+        let sheet = document.createElement("style");
+        sheet.textContent = `
+                .slot.mythic[armor-item-tooltip] {
+                    .gradient_wrapper::before,
+                    .gradient_wrapper::after,
+                    &:not(:has(.gradient_wrapper))::before,
+                    &:not(:has(.gradient_wrapper))::after {
+                        content: '';
+                        display: block;
+                        width: 33%;
+                        height: 33%;
+                        position: absolute;
+                    }
+                    &:not([data-d*='"class":{"identifier":"${shared.Hero.infos.class}"']) {
+                        .gradient_wrapper::before,
+                        &:not(:has(.gradient_wrapper))::before {
+                            background-image: ${wrongClass} !important;
+                        }
+                    }
+            `;
+        for (const [bonus, background] of Object.entries(resonance1)) {
+            sheet.textContent += `
+                    &[data-d*='"resonance":"${bonus}"'] {
+                        .gradient_wrapper::before,
+                        &:not(:has(.gradient_wrapper))::before {
+                            background-image: ${background};
+                            background-repeat: no-repeat;
+                            background-size: contain;
+                            bottom: 33%;
+                            right: 1px;
+                        }
+                    }
+                `;
+        }
+        for (const [bonus, background] of Object.entries(resonance2)) {
+            sheet.textContent += `
+                    &[data-d*='"resonance":"${bonus}"'] {
+                        .gradient_wrapper::after,
+                        &:not(:has(.gradient_wrapper))::after {
+                            background-image: ${background};
+                            background-repeat: no-repeat;
+                            background-size: contain;
+                            bottom: 1px;
+                            right: 1px;
+                        }
+                    }
+                `;
+        }
+        for (const [theme, color] of Object.entries(colors)) {
+            sheet.textContent += `
+                    &[data-d*='"theme":{"identifier":"${theme}"'] {
+                        background: ${color};
+                    }
+                `;
+        }
+        sheet.textContent += `
+                    &[data-d*='"theme":{"identifier":null'] {
+                        background: ${rainbow};
+                    }
+            `;
+        sheet.textContent += `
+                }
+            `;
+        document.head.appendChild(sheet);
+    }
+
     function home() {
         if (CONFIG.raid.enabled) {
             setNonCompletedRaidCounts();
@@ -988,86 +1073,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 handler();
                 setInterval(handler, 1000);
             }
-        }
-    }
-
-    function shop() {
-        addResonanceIndicators()
-
-        function addResonanceIndicators() {
-            const wrongClass = 'url("/images/caracs/no_class.png")';
-            const resonance1 = {
-                damage: 'url("/images/caracs/damage.png")',
-                ego: 'url("/images/caracs/ego.png")',
-            }
-            const resonance2 = {
-                defense: 'url("/images/caracs/deff_undefined.png")',
-                chance: 'url("/images/pictures/misc/items_icons/5.png")',
-            }
-            const colors = {
-                darkness: '#434343',
-                fire: '#a61c00',
-                nature: '#38761d',
-                stone: '#b45f06',
-                sun: '#ffd966',
-                water: '#1155cc',
-                light: '#f3f3f3',
-                psychic: '#674ea7',
-            }
-            const rainbow = 'linear-gradient(0deg, rgba(255,0,0,1) 0%, rgba(255,154,0,1) 11%, rgba(208,222,33,1) 22%, rgba(79,220,74,1) 33%, rgba(63,218,216,1) 44%, rgba(47,201,226,1) 55%, rgba(28,127,238,1) 66%, rgba(95,21,242,1) 77%, rgba(186,12,248,1) 88%, rgba(251,7,217,1) 99%)';
-            let sheet = document.createElement("style");
-            sheet.textContent = `
-                .slot.mythic[armor-item-tooltip] {
-                    .gradient_wrapper::before,
-                    .gradient_wrapper::after {
-                        content: '';
-                        display: block;
-                        width: 33%;
-                        height: 33%;
-                        position: absolute;
-                    }
-                    &:not([data-d*='"class":{"identifier":"${shared.Hero.infos.class}"']) .gradient_wrapper::before {
-                        background-image: ${wrongClass} !important;
-                    }
-            `;
-            for (const [bonus, background] of Object.entries(resonance1)) {
-                sheet.textContent += `
-                    &[data-d*='"resonance":"${bonus}"'] .gradient_wrapper::before {
-                        background-image: ${background};
-                        background-repeat: no-repeat;
-                        background-size: contain;
-                        bottom: 33%;
-                        right: 1px;
-                    }
-                `;
-            }
-            for (const [bonus, background] of Object.entries(resonance2)) {
-                sheet.textContent += `
-                    &[data-d*='"resonance":"${bonus}"'] .gradient_wrapper::after {
-                        background-image: ${background};
-                        background-repeat: no-repeat;
-                        background-size: contain;
-                        bottom: 1px;
-                        right: 1px;
-                    }
-                `;
-            }
-            for (const [theme, color] of Object.entries(colors)) {
-                sheet.textContent += `
-                    &[data-d*='"theme":{"identifier":"${theme}"'] {
-                        background: ${color};
-                    }
-                `;
-            }
-            sheet.textContent += `
-                    &[data-d*='"theme":{"identifier":null'] {
-                        background: ${rainbow};
-                    }
-            `;
-            sheet.textContent += `
-                }
-            `;
-            document.head.appendChild(sheet);
         }
     }
 
@@ -2228,7 +2233,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 { enabled: false, popBar: false, popShortcuts: false },
             girlPreview:
                 { enabled: true },
-            shop:
+            heroEquip:
                 { enabled: true },
             quest:
                 { enabled: true, highRes: true, nav: true },
@@ -2316,17 +2321,17 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         registerModule({
             group: 'suckless',
             configSchema: {
-                baseKey: 'shop',
-                label: 'improved shop',
+                baseKey: 'heroEquip',
+                label: 'show resonance indicators on hero equip',
                 default: true,
             },
             run() {
-                config.shop = {
+                config.heroEquip = {
                     enabled: true,
                 };
             },
         });
-        config.shop.enabled = false;
+        config.heroEquip.enabled = false;
 
         registerModule({
             group: 'suckless',
