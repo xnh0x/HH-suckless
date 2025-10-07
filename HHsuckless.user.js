@@ -1196,9 +1196,12 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     function trollPreBattle() {
         // space key starts single battle
         if (!shared.Hero.energies.fight.amount) { return; }
-        document.addEventListener('keydown', (e) => {
+        $(document).on('keydown', (e) => {
             if (e.key === ' ') {
-                clickOnElement(document.querySelector(`.battle-buttons .single-battle-button`));
+                $(document).off('keydown');
+                doWhenSelectorAvailable(`.battle-buttons .single-battle-button`, () => {
+                    clickOnElement($(`.battle-buttons .single-battle-button`).get(0));
+                });
             }
         });
     }
@@ -1209,9 +1212,12 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     function pantheon() {
         // space key enters floor
-        document.addEventListener('keydown', (e) => {
+        $(document).on('keydown', (e) => {
             if (e.key === ' ') {
-                clickOnElement(document.querySelector(`#pantheon_tab_container .pantheon-pre-battle-btn`));
+                $(document).off('keydown');
+                doWhenSelectorAvailable(`#pantheon_tab_container .pantheon-pre-battle-btn`, () => {
+                    clickOnElement($(`#pantheon_tab_container .pantheon-pre-battle-btn`).get(0));
+                });
             }
         });
     }
@@ -1219,9 +1225,12 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     function pantheonPreBattle() {
         // space key starts single battle
         if (!shared.Hero.energies.worship.amount) { return; }
-        document.addEventListener('keydown', (e) => {
+        $(document).on('keydown', (e) => {
             if (e.key === ' ') {
-                clickOnElement(document.querySelector(`.battle-buttons .pantheon-single-battle-button`));
+                $(document).off('keydown');
+                doWhenSelectorAvailable(`.battle-buttons .pantheon-single-battle-button`, () => {
+                    clickOnElement($(`.battle-buttons .pantheon-single-battle-button`).get(0));
+                });
             }
         });
     }
@@ -1259,14 +1268,11 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
 
         // 1,2,3 keys start battles against the three opponents
-        document.addEventListener('keydown', (e) => {
-            const performButtons = document.querySelectorAll(`.season_arena_opponent_container .green_button_L.btn_season_perform`);
-            if (e.key === '1') {
-                clickOnElement(performButtons[0]);
-            } else if (e.key === '2') {
-                clickOnElement(performButtons[1]);
-            } else if (e.key === '3') {
-                clickOnElement(performButtons[2]);
+        $(document).on('keydown', (e) => {
+            const $performButtons = $(`.season_arena_opponent_container .green_button_L.btn_season_perform`);
+            if (e.key === '1' || e.key === '2' || e.key === '3') {
+                $(document).off('keydown');
+                clickOnElement($performButtons.get(+e.key - 1));
             }
         });
 
@@ -1294,8 +1300,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             // space key starts battle against the best opponent
             if (shared.Hero.energies.kiss.amount
                 && !(CONFIG.season.useThreshold && mainCriterion[best] < CONFIG.season.threshold)) {
-                document.addEventListener('keydown', (e) => {
+                $(document).on('keydown', (e) => {
                     if (e.key === ' ') {
+                        $(document).off('keydown');
                         clickOnElement(bestOpponent.querySelector(`.green_button_L.btn_season_perform`));
                     }
                 });
