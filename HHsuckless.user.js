@@ -1649,6 +1649,27 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 addRewardConfirmation('event_ranking_tab');
             }
 
+            onAjaxResponse(/action=leaderboard/, (response, opt) => {
+                const searchParams = new URLSearchParams(opt.data);
+                const feature = searchParams.get('feature');
+
+                if (feature === 'seasonal_event_top') {
+                    doWhenSelectorAvailable('#outer-hero-row', () => {
+                        const $bottomHeroRow = $('#outer-hero-row');
+                        const rank = +$bottomHeroRow.find('.rank').text();
+                        if (rank > 1000) { return; }
+
+                        $bottomHeroRow.on('click', () => {
+                            $('.hero-row').get(0).scrollIntoView({
+                                block: "center",
+                                behavior: "smooth",
+                                container: "nearest",
+                            });
+                        });
+                    });
+                }
+            });
+
             function addLRCSS() {
                 let sheet = document.createElement("style");
                 sheet.textContent = `
@@ -1698,6 +1719,27 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             if (seasonalData.rankingRewards) {
                 addRewardConfirmation('event_ranking_tab');
             }
+
+            onAjaxResponse(/action=leaderboard/, (response, opt) => {
+                const searchParams = new URLSearchParams(opt.data);
+                const feature = searchParams.get('feature');
+
+                if (feature === 'seasonal_event_top') {
+                    doWhenSelectorAvailable('#outer-hero-row', () => {
+                        const $bottomHeroRow = $('#outer-hero-row');
+                        const rank = +$bottomHeroRow.find('.rank').text();
+                        if (rank > 1000) { return; }
+
+                        $bottomHeroRow.on('click', () => {
+                            $('.hero-row').get(0).scrollIntoView({
+                                block: "center",
+                                behavior: "smooth",
+                                container: "nearest",
+                            });
+                        });
+                    });
+                }
+            });
 
             function addHACSS() {
                 let sheet = document.createElement("style");
