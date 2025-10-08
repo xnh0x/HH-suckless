@@ -1321,7 +1321,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         // wait for the battle result
         onAjaxResponse(/action=do_battles_/, (response, opt) => {
             // space key skips battle, a second press accepts the results
-            let skipClicked = false, okClicked = false, claimClicked = false;
+            let okClicked = false, claimClicked = false;
             $(document).on('keydown', (e) => {
                 if (e.key === ' ') {
                     if (claimClicked) { return; }
@@ -1338,11 +1338,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                         okClicked =  true;
                         return;
                     }
-                    if (skipClicked) { return; }
                     const $skipButton = $('#new-battle-skip-btn');
                     if ($skipButton.length && $skipButton.css('display') !== 'none') {
                         clickOnElement($skipButton.get(0));
-                        skipClicked = true;
                     }
                 }
             });
