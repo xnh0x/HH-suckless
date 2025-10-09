@@ -940,6 +940,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             addSeasonalInfo();
         }
 
+        highlightMaxCollect();
+
         function setNonCompletedRaidCounts() {
             const raids = JSON.parse(localStorage.getItem(LS.loveRaids));
             const { ongoing_love_raids_count, upcoming_love_raids_count } = unsafeWindow;
@@ -1075,6 +1077,30 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 handler();
                 setInterval(handler, 1000);
             }
+        }
+
+        function highlightMaxCollect() {
+
+            const { upcoming_girl_salaries } = unsafeWindow;
+            const lastSalary = upcoming_girl_salaries.reduce((res, cur) => {
+                if (cur['next_pay_in'] > res)
+                    return cur['next_pay_in'];
+                return res;
+            }, 0);
+
+            setTimeout(() => {
+                $('#collect_all').addClass('max-salary');
+            }, lastSalary * 1000);
+
+            const sheet = document.createElement('style');
+            sheet.textContent = `
+                .max-salary {
+                    border-radius: 50% !important;
+                    box-shadow: 0px 0px 6px 6px #ffb244 !important;
+                    background-image: linear-gradient(0deg, #c44800, #ffbb00) !important;
+                }
+            `;
+            document.head.appendChild(sheet);
         }
     }
 
