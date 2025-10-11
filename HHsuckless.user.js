@@ -1097,8 +1097,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             sheet.textContent = `
                 .max-salary {
                     border-radius: 50% !important;
-                    box-shadow: 0px 0px 6px 6px #ffb244 !important;
-                    background-image: linear-gradient(0deg, #c44800, #ffbb00) !important;
+                    box-shadow: 0px 0px 6px 6px #ccff40 !important;
+                    background-image: linear-gradient(0deg, #3db236, #96c120) !important;
                 }
             `;
             document.head.appendChild(sheet);
