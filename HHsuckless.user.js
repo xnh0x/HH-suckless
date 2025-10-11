@@ -56,7 +56,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 doWhenSelectorAvailable,
                 getCDNHost,
                 getGameKey,
-                getGirlDictionary,
                 getHref,
                 getWikiLink,
                 onAjaxResponse,
@@ -71,6 +70,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             HHMenu
         }
     } = unsafeWindow;
+
+    const bind = (obj, methodName) => obj[methodName].bind(obj);
+
+    const getGirlDictionary = bind(unsafeWindow.HHPlusPlus.Helpers, 'getGirlDictionary');
 
     const LS = {
         labFavorites: 'HHsucklessLabFavorites',
