@@ -1085,11 +1085,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         function highlightMaxCollect() {
 
             const { upcoming_girl_salaries } = unsafeWindow;
-            const lastSalary = upcoming_girl_salaries.reduce((res, cur) => {
-                if (cur['next_pay_in'] > res)
-                    return cur['next_pay_in'];
-                return res;
-            }, 0);
+            const lastSalary = upcoming_girl_salaries.length
+                ? upcoming_girl_salaries[upcoming_girl_salaries.length - 1]['next_pay_in']
+                : 0;
 
             setTimeout(() => {
                 $('#collect_all').addClass('max-salary');
