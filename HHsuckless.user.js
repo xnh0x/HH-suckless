@@ -383,7 +383,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
          *     if a specific raid is active
          */
         if (CONFIG.raid.enabled) {
-            await loveRaids();
+            doWhenSelectorAvailable('.raid-card', loveRaids);
         }
     }
 
