@@ -479,7 +479,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
          * - copy current team list
          */
         if (CONFIG.editTeam.enabled) {
-            await editTeam();
+            doWhenSelectorAvailable('#clear-team', editTeam);
         }
     }
 
@@ -923,8 +923,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     function home() {
         if (CONFIG.raid.enabled) {
-            setNonCompletedRaidCounts();
-            setRaidNotification();
+            doWhenSelectorAvailable('.raids', () => {
+                setNonCompletedRaidCounts();
+                setRaidNotification();
+            });
         }
 
         if (CONFIG.news.enabled) {
