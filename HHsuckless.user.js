@@ -922,6 +922,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function home() {
+        addCSS();
+
         if (CONFIG.raid.enabled) {
             doWhenSelectorAvailable('.raids', () => {
                 setNonCompletedRaidCounts();
@@ -946,6 +948,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
 
         highlightMaxCollect();
+
+        showCollectibleSalary();
 
         function setNonCompletedRaidCounts() {
             const raids = JSON.parse(localStorage.getItem(LS.loveRaids));
@@ -1085,22 +1089,68 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
 
         function highlightMaxCollect() {
-
             const { upcoming_girl_salaries } = unsafeWindow;
             const lastSalary = upcoming_girl_salaries.length
                 ? upcoming_girl_salaries[upcoming_girl_salaries.length - 1]['next_pay_in']
                 : 0;
 
-            setTimeout(() => {
-                $('#collect_all').addClass('max-salary');
+            const $collectAll = $('#collect_all');
+            const timeout = setTimeout(() => {
+                $collectAll.addClass('max-salary');
             }, lastSalary * 1000);
 
+            $collectAll.on('click', () => {
+                clearTimeout(timeout);
+                setTimeout(highlightMaxCollect, 1000);
+            });
+        }
+
+        function showCollectibleSalary() {
+            const { salary_collect, upcoming_girl_salaries } = unsafeWindow;
+
+            const $collectAll = $('#collect_all span.soft_currency_icn');
+            let toCollect = 0;
+            const timeouts = [];
+
+            updateSalary(salary_collect);
+            upcoming_girl_salaries.forEach((salary) => {
+                timeouts.push(setTimeout(updateSalary, salary['next_pay_in']*1000, salary['value']));
+            });
+
+            $collectAll.on('click', () => {
+                timeouts.forEach(clearTimeout);
+                setTimeout(showCollectibleSalary, 1000);
+            });
+
+            function updateSalary(income) {
+                toCollect += income;
+                $collectAll.attr('to-collect', `${Intl.NumberFormat('en', {notation: 'compact'}).format(toCollect)}`);
+            }
+        }
+
+        function addCSS() {
             const sheet = document.createElement('style');
-            sheet.textContent = `
+            sheet.textContent = '';
+            sheet.textContent += `
                 .max-salary {
                     border-radius: 50% !important;
                     box-shadow: 0px 0px 6px 6px #ccff40 !important;
                     background-image: linear-gradient(0deg, #3db236, #96c120) !important;
+                }
+            `;
+            sheet.textContent += `
+                #collect_all span.soft_currency_icn::after {
+                    content: attr(to-collect);
+                    font-size: 10px;
+                    color: #fff;
+                    text-shadow:
+                         1px  1px 0 #000,
+                        -1px  1px 0 #000,
+                        -1px -1px 0 #000,
+                         1px -1px 0 #000;
+                    position: absolute;
+                    bottom: 0px;
+                    justify-self: anchor-center;
                 }
             `;
             document.head.appendChild(sheet);
