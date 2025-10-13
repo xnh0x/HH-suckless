@@ -947,9 +947,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             addSeasonalInfo();
         }
 
-        highlightMaxCollect();
-
-        showCollectibleSalary();
+        addCollectAllInfo();
 
         function setNonCompletedRaidCounts() {
             const raids = JSON.parse(localStorage.getItem(LS.loveRaids));
@@ -1088,43 +1086,22 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             }
         }
 
-        function highlightMaxCollect() {
+        function addCollectAllInfo() {
             const { upcoming_girl_salaries } = unsafeWindow;
-            const lastSalary = upcoming_girl_salaries.length
-                ? upcoming_girl_salaries[upcoming_girl_salaries.length - 1]['next_pay_in']
-                : 0;
-
             const $collectAll = $('#collect_all');
-            const timeout = setTimeout(() => {
+            if (!upcoming_girl_salaries.length)
                 $collectAll.addClass('max-salary');
-            }, lastSalary * 1000);
+
+            showCollectibleSalary();
 
             $collectAll.on('click', () => {
-                clearTimeout(timeout);
-                setTimeout(highlightMaxCollect, 1000);
-            });
-        }
-
-        function showCollectibleSalary() {
-            const { salary_collect, upcoming_girl_salaries } = unsafeWindow;
-
-            const $collectAll = $('#collect_all span.soft_currency_icn');
-            let toCollect = 0;
-            const timeouts = [];
-
-            updateSalary(salary_collect);
-            upcoming_girl_salaries.forEach((salary) => {
-                timeouts.push(setTimeout(updateSalary, salary['next_pay_in']*1000, salary['value']));
+                $collectAll.removeClass('max-salary');
+                setTimeout(showCollectibleSalary, 500);
             });
 
-            $collectAll.on('click', () => {
-                timeouts.forEach(clearTimeout);
-                setTimeout(showCollectibleSalary, 1000);
-            });
-
-            function updateSalary(income) {
-                toCollect += income;
-                $collectAll.attr('to-collect', `${Intl.NumberFormat('en', {notation: 'compact'}).format(toCollect)}`);
+            function showCollectibleSalary() {
+                const { salary_collect } = unsafeWindow;
+                $('#collect_all span.soft_currency_icn').attr('to-collect', `${Intl.NumberFormat('en', {notation: 'compact'}).format(salary_collect)}`);
             }
         }
 
