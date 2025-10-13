@@ -1087,21 +1087,20 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
 
         function addCollectAllInfo() {
-            const { upcoming_girl_salaries } = unsafeWindow;
+            const { salary_collect, upcoming_girl_salaries } = unsafeWindow;
             const $collectAll = $('#collect_all');
             if (!upcoming_girl_salaries.length)
                 $collectAll.addClass('max-salary');
 
-            showCollectibleSalary();
+            showCollectibleSalary(salary_collect);
 
             $collectAll.on('click', () => {
                 $collectAll.removeClass('max-salary');
-                setTimeout(showCollectibleSalary, 500);
+                setTimeout(showCollectibleSalary, 500, 0);
             });
 
-            function showCollectibleSalary() {
-                const { salary_collect } = unsafeWindow;
-                $('#collect_all span.soft_currency_icn').attr('to-collect', `${Intl.NumberFormat('en', {notation: 'compact'}).format(salary_collect)}`);
+            function showCollectibleSalary(value) {
+                $('#collect_all span.soft_currency_icn').attr('to-collect', `${Intl.NumberFormat('en', {notation: 'compact'}).format(value)}`);
             }
         }
 
