@@ -492,6 +492,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             sultryMysteries();
         } else if (window.location.search.includes('tab=path_event_')) {
             PoA();
+        } else if (window.location.search.includes('tab=dp_event_')) {
+            DP();
         }
 
     }
@@ -2188,6 +2190,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function PoA() {
+        preventAutoPopup(['a.pass-reminder'], '#pass_reminder_popup', '#pass_reminder_popup close.closable')
+    }
+
+    function DP() {
         preventAutoPopup(['a.pass-reminder'], '#pass_reminder_popup', '#pass_reminder_popup close.closable')
     }
 
