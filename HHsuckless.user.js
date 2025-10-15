@@ -486,7 +486,12 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     if (window.location.pathname === '/event.html') {
         /*
          * - Sultry Mysteries
-         *     red/green generate button to indicate optimal grid refresh
+         *     - red/green generate button to indicate optimal grid refresh
+         *     - space bar shortcut
+         * - PoA/PoR
+         *     - hide reminder
+         * - DP
+         *     - hide reminder
          */
         if (window.location.search.includes('tab=sm_event_')) {
             sultryMysteries();
@@ -2156,6 +2161,25 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     function sultryMysteries() {
         doWhenSelectorAvailable('#grid_tab_container', function() {
+            $(document).on('keydown', (e) => {
+                if (e.key === ' ') {
+                    const $ok = $('#rewards_popup .blue_button_L[confirm_blue_button]');
+                    if ($ok.length) {
+                        clickOnElement($ok.get(0));
+                        return;
+                    }
+                    const $generate = $('.generate-new-grid.green_button_L:not([disabled])');
+                    if ($generate.length) {
+                        clickOnElement($generate.get(0));
+                        return;
+                    }
+                    const $tile = $('.grid-slot.locked');
+                    if ($tile.length) {
+                        clickOnElement($tile.get(0));
+                    }
+                }
+            });
+
             runAndRepeatOnChange('#grid_tab_container', function() {
                 const $grid = $('#grid_tab_container');
                 const tilesLeft = $grid.find('.grid-slot.locked').length;
