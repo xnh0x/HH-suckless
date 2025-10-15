@@ -2170,24 +2170,23 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     function sultryMysteries() {
         doWhenSelectorAvailable('.preview-rewards-panel .preview-rewards-list', function() {
-            const $generateButton = $('button.generate-new-grid');
-            const $rewards = $('.preview-rewards-panel .preview-rewards-list');
-
             runAndRepeatOnChange('.preview-rewards-panel .preview-rewards-list', function() {
+                const $rewards = $('.preview-rewards-panel .preview-rewards-list');
                 const tilesLeft = $rewards.find('.reward-preview:not(.claimed)').length;
                 const coinsLeft = getAvailableAmount('.slot_sultry_coins');
                 const keysLeft = getAvailableAmount('.slot_progressions');
 
+                const $generateButton = $('button.generate-new-grid');
                 $generateButton.removeClass(['blue_button_L', 'red_button_L', 'green_button_L']);
                 $generateButton.addClass(
                     (coinsLeft + keysLeft) / tilesLeft >= 0.75 ? 'red_button_L' : 'green_button_L'
                 );
-            });
 
-            function getAvailableAmount(cls) {
-                return Array.from($rewards.find(`.reward-preview:not(.claimed) ${cls} .amount`))
-                    .reduce((sum, el) => sum + +(el.innerText), 0);
-            }
+                function getAvailableAmount(cls) {
+                    return Array.from($rewards.find(`.reward-preview:not(.claimed) ${cls} .amount`))
+                        .reduce((sum, el) => sum + +(el.innerText), 0);
+                }
+            });
         });
     }
 
