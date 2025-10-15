@@ -1203,9 +1203,11 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                         }
                         return;
                     }
-                    const $visitButtons = $('button.blue_button_L[rel=pop_thumb_info][style!="display:none"]');
-                    clickOnElement($visitButtons.get(0));
-                    $(document).off('keydown');
+                    const $visitButtons = $('.pop_thumb_container:not(:has(.pop_thumb_progress_bar[style!="display:none"])) button.blue_button_L[rel=pop_thumb_info][style!="display:none"]');
+                    if ($visitButtons.length) {
+                        clickOnElement($visitButtons.get(0));
+                        $(document).off('keydown');
+                    }
                 }
             });
         }
