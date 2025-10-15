@@ -1307,17 +1307,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function seasonArena() {
-        // try to sort immediately and enable the observer in case rena's results weren't available yet
-        if (!sortOpponents()) {
-            log('waiting for rena');
-            const observer = new MutationObserver(async () => {
-                if (document.querySelectorAll('.sim-chance').length === 3) {
-                    observer.disconnect();
-                    sortOpponents();
-                }
-            });
-            observer.observe(document, {childList: true, subtree: true});
-        }
+        log('waiting for rena');
+        doASAP(sortOpponents, '.sim-chance, .sim-mojo', jQ => jQ.length === 6);
 
         // 1,2,3 keys start battles against the three opponents
         $(document).on('keydown', (e) => {
@@ -1332,9 +1323,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             const cls = {main:'.sim-chance', tie:'.sim-mojo'};
             const mainCriterion = Array.from(document.querySelectorAll(cls.main)).map((el) => parseFloat(el.innerText));
             const tieBreaker = Array.from(document.querySelectorAll(cls.tie)).map((el) => parseFloat(el.innerText));
-            if (mainCriterion.length < 3 || tieBreaker.length < 3) {
-                return false;
-            }
             let best = 0;
             mainCriterion.forEach((c, i) => {
                 if (c < mainCriterion[best]) return;
@@ -1360,8 +1348,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 });
             }
             log('opponents sorted');
-
-            return true;
         }
     }
 
@@ -2291,6 +2277,22 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 clickOnElement($(close)[0]);
             }
         });
+    }
+
+    function doASAP(callback, selector, condition = (jQ) => jQ.length) {
+        const $selected = $(selector);
+        if (condition($selected)) {
+            callback($selected);
+        } else {
+            const observer = new MutationObserver(() => {
+                const $selected = $(selector);
+                if (condition($selected)) {
+                    observer.disconnect();
+                    callback($selected);
+                }
+            })
+            observer.observe(document.documentElement, {childList: true, subtree: true});
+        }
     }
 
     function runOnChange(selectors, func) {
