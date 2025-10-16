@@ -100,8 +100,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
 
         addCSS() {
-            let sheet = document.createElement("style");
-            sheet.textContent = `
+            addStyle(`
                 .harem-girl-container,
                 .girl-container {
                     position: relative;
@@ -158,8 +157,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     margin-top: 0.5rem;
                     margin-bottom: -0.5rem;
                 }
-            `;
-            document.head.appendChild(sheet);
+            `);
         }
 
         toggleFavorite(id) {
@@ -504,12 +502,12 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function girlPreview() {
-        let sheet = document.createElement("style");
-        sheet.textContent = [
-            '.pose-preview_wrapper.locked .pose-preview { filter: blur(0) !important; }',
-            '.pose-preview_wrapper.locked .preview-locked_icn { display: none !important; }',
-        ].join(' ');
-        document.head.appendChild(sheet);
+        addStyle(`
+            .pose-preview_wrapper.locked {
+                .pose-preview { filter: blur(0) !important; }
+                .preview-locked_icn { display: none !important; }
+            }
+        `);
 
         repeatOnChange('#common-popups', () => {
             $('#scenes-tab_container .scene-preview_wrapper.unlocked img').each((i, img) => {
@@ -675,8 +673,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
         function addPopCSS() {
             // pretty much 1 to 1 copied from the other bar's styles
-            let sheet = document.createElement("style");
-            sheet.textContent = `
+            addStyle(`
                 body>div#contains_all>header>div.energy_counter .energy_counter_icon span.hudPop_mix_icn {
                     height: 24px;
                     width: 24px;
@@ -759,8 +756,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                         line-height: 9px;
                     }
                 }
-            `;
-            document.head.appendChild(sheet);
+            `);
         }
     }
 
@@ -806,8 +802,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
 
         function addCalendarCSS() {
-            let sheet = document.createElement("style");
-            sheet.textContent = `
+            addStyle(`
                 #contains_all > nav ic.calendar {
                     background-image: url(https://raw.githubusercontent.com/xnh0x/HH-suckless/refs/heads/master/icon/calendar_month.svg);
                 }
@@ -836,8 +831,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 .calendar_container img {
                     height: 90%;
                 }
-            `;
-            document.head.appendChild(sheet);
+            `);
         }
     }
 
@@ -862,8 +856,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             psychic: '#674ea7',
         }
         const rainbow = 'linear-gradient(0deg, rgba(255,0,0,1) 0%, rgba(255,154,0,1) 11%, rgba(208,222,33,1) 22%, rgba(79,220,74,1) 33%, rgba(63,218,216,1) 44%, rgba(47,201,226,1) 55%, rgba(28,127,238,1) 66%, rgba(95,21,242,1) 77%, rgba(186,12,248,1) 88%, rgba(251,7,217,1) 99%)';
-        let sheet = document.createElement("style");
-        sheet.textContent = `
+
+        let css = `
                 .slot.mythic[armor-item-tooltip] {
                     .gradient_wrapper::before,
                     .gradient_wrapper::after,
@@ -883,7 +877,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     }
             `;
         for (const [bonus, background] of Object.entries(resonance1)) {
-            sheet.textContent += `
+            css += `
                     &[data-d*='"resonance":"${bonus}"'] {
                         .gradient_wrapper::before,
                         &:not(:has(.gradient_wrapper))::before {
@@ -897,7 +891,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 `;
         }
         for (const [bonus, background] of Object.entries(resonance2)) {
-            sheet.textContent += `
+            css += `
                     &[data-d*='"resonance":"${bonus}"'] {
                         .gradient_wrapper::after,
                         &:not(:has(.gradient_wrapper))::after {
@@ -911,26 +905,22 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 `;
         }
         for (const [theme, color] of Object.entries(colors)) {
-            sheet.textContent += `
+            css += `
                     &[data-d*='"theme":{"identifier":"${theme}"'] {
                         background: ${color};
                     }
                 `;
         }
-        sheet.textContent += `
+        css += `
                     &[data-d*='"theme":{"identifier":null'] {
                         background: ${rainbow};
                     }
-            `;
-        sheet.textContent += `
                 }
             `;
-        document.head.appendChild(sheet);
+        addStyle(css);
     }
 
     function home() {
-        addCSS();
-
         if (CONFIG.raid.enabled) {
             doWhenSelectorAvailable('.raids', () => {
                 setNonCompletedRaidCounts();
@@ -1102,19 +1092,13 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             if (salary_collect)
                 $('#collect_all span.soft_currency_icn').attr('to-collect',
                     `${Intl.NumberFormat('en', {notation: 'compact'}).format(salary_collect)}`);
-        }
 
-        function addCSS() {
-            const sheet = document.createElement('style');
-            sheet.textContent = '';
-            sheet.textContent += `
+            addStyle(`
                 .max-salary {
                     border-radius: 50% !important;
                     box-shadow: 0px 0px 6px 6px #ccff40 !important;
                     background-image: linear-gradient(0deg, #3db236, #96c120) !important;
                 }
-            `;
-            sheet.textContent += `
                 #collect_all span.soft_currency_icn::after {
                     content: attr(to-collect);
                     font-size: 10px;
@@ -1128,35 +1112,19 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     bottom: 0px;
                     justify-self: anchor-center;
                 }
-            `;
-            document.head.appendChild(sheet);
+            `);
         }
     }
 
     function championsMap() {
         if (CONFIG.champ.noRaid) {
-            hideRaidCards();
-        }
-
-        function hideRaidCards() {
-            let sheet = document.createElement("style");
-            sheet.textContent = `
-                .love-raid-container {
-                    display: none;
-                }
-            `;
-            document.head.appendChild(sheet);
+            addStyle(`.love-raid-container { display: none; }`);
         }
     }
 
     function clubChampion() {
         if (CONFIG.champ.fade) {
-            fadeOutDraft();
-        }
-
-        function fadeOutDraft() {
-            let sheet = document.createElement("style");
-            sheet.textContent = `
+            addStyle(`
                 .girl-selection__girl-box:has(> div > span[carac="1"]),
                 .girl-selection__girl-box:has(> div > span[carac="carac1"]),
                 .girl-selection__girl-box:has(> div > span[carac="class1"]),
@@ -1165,8 +1133,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 .girl-selection__girl-box:has(> div > span[carac="class2"]) {
                     filter: grayscale(0.5) opacity(0.5);
                 }
-            `;
-            document.head.appendChild(sheet);
+            `);
         }
     }
 
@@ -1508,13 +1475,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         addNotificationToggle();
 
         if (CONFIG.raid.hideOwned) {
-            const sheet = document.createElement("style");
-            sheet.textContent = `.raid-card.grey-overlay { display: none !important; }`;
-            document.head.appendChild(sheet);
+            addStyle(`.raid-card.grey-overlay { display: none !important; }`);
         }
 
         function addNotificationToggle() {
-            addCSS();
             const raidNotifs = JSON.parse(localStorage.getItem(LS.loveRaidsNotifications)) || [];
             $('.raid-card:not(.grey-overlay)').each(function () {
                 const id_raid = +$(this).attr('id_raid');
@@ -1537,45 +1501,38 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 });
             });
 
-            function addCSS() {
-                let sheet = document.createElement("style");
-                sheet.textContent = `
-                    #love-raids .raid-card:not(.expanded) .raid-content .info-box {
-                        padding-top: 0;
-                        top: 4.8em;
-                    }
-                    
-                    #love-raids .raid-card:not(.expanded).multiple-girl .raid-content .info-box .classic-girl:nth-of-type(2) .shards-container {
-                        top: 0;
-                    }
-                    .notify-toggle {
-                        position: relative;
-                        display: inline-block;
-                        height: 25px;
-                        width: 25px;
-                        background-image: url('${getCDNHost()}/ic_new.png');
-                        background-size: contain;
-                        background-repeat: no-repeat;
-                        background-position: center;
-                        opacity: 0.5;
-                        filter: grayscale(1);
-                    }
-                    .raid-name[data-notify="true"] .notify-toggle {
-                        opacity: 1;
-                        filter: grayscale(0);
-                    }
-                `;
-                document.head.appendChild(sheet);
-            }
+            addStyle(`
+                #love-raids .raid-card:not(.expanded) .raid-content .info-box {
+                    padding-top: 0;
+                    top: 4.8em;
+                }
+                
+                #love-raids .raid-card:not(.expanded).multiple-girl .raid-content .info-box .classic-girl:nth-of-type(2) .shards-container {
+                    top: 0;
+                }
+                .notify-toggle {
+                    position: relative;
+                    display: inline-block;
+                    height: 25px;
+                    width: 25px;
+                    background-image: url('${getCDNHost()}/ic_new.png');
+                    background-size: contain;
+                    background-repeat: no-repeat;
+                    background-position: center;
+                    opacity: 0.5;
+                    filter: grayscale(1);
+                }
+                .raid-name[data-notify="true"] .notify-toggle {
+                    opacity: 1;
+                    filter: grayscale(0);
+                }
+            `);
         }
 
-        function addMissingGoButton(e) {
-            if (e && !e.querySelectorAll('.redirect_button').length) {
-                const button = document.createElement('a');
-                button.setAttribute('disabled', '');
-                button.classList.add('redirect_button', 'blue_button_L');
-                button.innerText = 'Go';
-                e.querySelector('.shards-container').appendChild(button);
+        function addMissingGoButton(element) {
+            if (element && !$(element).find('.redirect_button').length) {
+                $(element).find('.shards-container')
+                    .append(`<a class="redirect_button blue_button_L" disabled>Go</a>`);
             }
         }
     }
@@ -1625,9 +1582,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
 
         function seasonalEvent() {
-
-            addSECSS();
-
             preventAutoPopup(['a.pass-reminder'], '#pass_reminder_popup', '#pass_reminder_popup close');
 
             if (seasonalData.new) {
@@ -1636,37 +1590,30 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 };
             }
 
-            function addSECSS() {
-                let sheet = document.createElement("style");
-                sheet.textContent = ``;
-                if (CONFIG.seasonal.hideSeasonalEventBonusPath) {
-                    sheet.textContent += `
-                        #home_tab_container .mega-progress-bar-tiers.double-mega-event .mega-tier-container {
-                            height: 5rem !important;
-                        }
-                        #home_tab_container .middle-container {
-                            padding-top: 1rem;
-                        }
-                        #home_tab_container .bottom-container {
-                            padding-top: 2rem;
-                            height: 8.75rem !important;
-                        }
-                        #home_tab_container .bottom-container .left-part-container.mega-event-2 {
-                            height: 11rem !important;
-                        }
-                        #home_tab_container .mega-tier.pass-slot,
-                        #home_tab_container .gsp_btn_holder {
-                            display: none !important;
-                        }
-                    `;
-                }
-                document.head.appendChild(sheet);
+            if (CONFIG.seasonal.hideSeasonalEventBonusPath) {
+                addStyle(`
+                    #home_tab_container .mega-progress-bar-tiers.double-mega-event .mega-tier-container {
+                        height: 5rem !important;
+                    }
+                    #home_tab_container .middle-container {
+                        padding-top: 1rem;
+                    }
+                    #home_tab_container .bottom-container {
+                        padding-top: 2rem;
+                        height: 8.75rem !important;
+                    }
+                    #home_tab_container .bottom-container .left-part-container.mega-event-2 {
+                        height: 11rem !important;
+                    }
+                    #home_tab_container .mega-tier.pass-slot,
+                    #home_tab_container .gsp_btn_holder {
+                        display: none !important;
+                    }
+                `);
             }
         }
 
         function lustyRace() {
-            addLRCSS();
-
             if (seasonalData.new) {
                 seasonalData = { type: 2, new: false,
                     seasonalEnd: server_now_ts + mega_event_time_remaining,
@@ -1718,21 +1665,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 }
             });
 
-            function addLRCSS() {
-                let sheet = document.createElement("style");
-                sheet.textContent = `
-                        #mega-event-tabs .collect_notif.show-chest {
-                            display: unset !important;
-                        }
-                    `;
-                document.head.appendChild(sheet);
-            }
+            addStyle(`#mega-event-tabs .collect_notif.show-chest { display: unset !important; }`);
         }
 
         function hotAssembly() {
-
-            addHACSS();
-
             if (CONFIG.seasonal.hideHotAssemblyBonusPath) {
                 $('#get_mega_pass_kobans_btn').attr('disabled', '');
                 doWhenSelectorAvailable('#pass_reminder_popup close', () => {
@@ -1789,35 +1725,28 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 }
             });
 
-            function addHACSS() {
-                let sheet = document.createElement("style");
-                sheet.textContent = `
-                    #mega-event-tabs .collect_notif.show-chest {
-                        display: unset !important;
+            addStyle(`#mega-event-tabs .collect_notif.show-chest { display: unset !important; }`);
+
+            if (CONFIG.seasonal.hideHotAssemblyBonusPath) {
+                addStyle(`
+                    #home_tab_container .mega-progress-bar-tiers.double-mega-event .mega-tier-container {
+                        height: 5rem !important;
                     }
-                `;
-                if (CONFIG.seasonal.hideHotAssemblyBonusPath) {
-                    sheet.textContent += `
-                        #home_tab_container .mega-progress-bar-tiers.double-mega-event .mega-tier-container {
-                            height: 5rem !important;
-                        }
-                        #home_tab_container .middle-container {
-                            padding-top: 1rem;
-                        }
-                        #home_tab_container .bottom-container {
-                            padding-top: 2rem;
-                            height: 8.75rem !important;
-                        }
-                        #home_tab_container .bottom-container .left-part-container.mega-event-2 {
-                            height: 11rem !important;
-                        }
-                        #home_tab_container .mega-tier.pass-slot,
-                        #home_tab_container .gsp_btn_holder {
-                            display: none !important;
-                        }
-                    `;
-                }
-                document.head.appendChild(sheet);
+                    #home_tab_container .middle-container {
+                        padding-top: 1rem;
+                    }
+                    #home_tab_container .bottom-container {
+                        padding-top: 2rem;
+                        height: 8.75rem !important;
+                    }
+                    #home_tab_container .bottom-container .left-part-container.mega-event-2 {
+                        height: 11rem !important;
+                    }
+                    #home_tab_container .mega-tier.pass-slot,
+                    #home_tab_container .gsp_btn_holder {
+                        display: none !important;
+                    }`
+                );
             }
         }
 
@@ -2354,6 +2283,12 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             bubbles: true,
             clientX: posX, clientY: posY,
             screenX: posX, screenY: posY}));
+    }
+
+    function addStyle(css) {
+        const sheet = document.createElement('style');
+        sheet.textContent = css;
+        document.head.appendChild(sheet);
     }
 
     function loadConfig() {
