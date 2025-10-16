@@ -2655,6 +2655,41 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
         config.noWBT.enabled = false;
 
+        registerModule({
+            group: 'suckless',
+            configSchema: {
+                baseKey: 'broke',
+                label: `I'm broke :(`,
+                default: false,
+            },
+            run() {
+                if (this.hasRun) return;
+                this.hasRun = true;
+
+                /*global season_has_pass*/
+                if (!season_has_pass) {
+                    // season - hide path and adjust tier labels
+                    addStyle(`
+                        #gsp_btn_holder { display: none !important; }
+                        .pass_reward.reward_wrapper { display: none !important; }
+                        .rewards_seasons_row .rewards_pair .tier_number { top: 100% !important; }`
+                    );
+
+                }
+
+                // ME - hide shop button and bundles
+                addStyle(`
+                    #get_mega_pass_shop_btn { display: none !important; }
+                    #bundles_tab { display: none !important; }`
+                );
+
+                // ?
+                addStyle(`
+                    .purchase-shop { display: none !important; }`
+                );
+            },
+        });
+
         hhLoadConfig();
         runModules();
 
