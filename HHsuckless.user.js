@@ -944,8 +944,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             addSeasonalInfo();
         }
 
-        addCollectAllInfo();
-
         function setNonCompletedRaidCounts() {
             const raids = JSON.parse(localStorage.getItem(LS.loveRaids));
             const { ongoing_love_raids_count, upcoming_love_raids_count } = unsafeWindow;
@@ -1081,38 +1079,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 handler();
                 setInterval(handler, 1000);
             }
-        }
-
-        function addCollectAllInfo() {
-            const { salary_collect, upcoming_girl_salaries } = unsafeWindow;
-            const $collectAll = $('#collect_all');
-            if (!upcoming_girl_salaries.length)
-                $collectAll.addClass('max-salary');
-
-            if (salary_collect)
-                $('#collect_all span.soft_currency_icn').attr('to-collect',
-                    `${Intl.NumberFormat('en', {notation: 'compact'}).format(salary_collect)}`);
-
-            addStyle(`
-                .max-salary {
-                    border-radius: 50% !important;
-                    box-shadow: 0px 0px 6px 6px #ccff40 !important;
-                    background-image: linear-gradient(0deg, #3db236, #96c120) !important;
-                }
-                #collect_all span.soft_currency_icn::after {
-                    content: attr(to-collect);
-                    font-size: 10px;
-                    color: #fff;
-                    text-shadow:
-                         1px  1px 0 #000,
-                        -1px  1px 0 #000,
-                        -1px -1px 0 #000,
-                         1px -1px 0 #000;
-                    position: absolute;
-                    bottom: 0px;
-                    justify-self: anchor-center;
-                }
-            `);
         }
     }
 
