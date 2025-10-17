@@ -10,7 +10,7 @@
 // @match        https://*.pornstarharem.com/*
 // @match        https://*.gaypornstarharem.com/*
 // @match        https://*.transpornstarharem.com/*
-// @run-at       document-idle
+// @run-at       document-end
 // @namespace    https://github.com/xnh0x/HH-suckless
 // @updateURL    https://github.com/xnh0x/HH-suckless/raw/refs/heads/master/HHsuckless.user.js
 // @downloadURL  https://github.com/xnh0x/HH-suckless/raw/refs/heads/master/HHsuckless.user.js
@@ -1033,10 +1033,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 // there is nothing relevant to show on the homepage
             } else if (seasonalData.type === 2) {
                 // lusty race;
-                addRankingTimer();
+                doASAP(addRankingTimer, 'div.over[rel="mega-event"]');
             } else if (seasonalData.type === 3) {
                 // hot assembly
-                addRankingTimer();
+                doASAP(addRankingTimer, 'div.over[rel="mega-event"]');
             }
 
             function addRankingTimer() {
@@ -1748,7 +1748,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
 
         if (CONFIG.quest.nav) {
-            addNavigationButtons();
+            doASAP(addNavigationButtons, '#archive-back, #archive-next');
         }
 
         function addNavigationButtons() {
