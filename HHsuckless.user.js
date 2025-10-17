@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         HH suckless
-// @version      0.39.1
+// @version      0.39.2
 // @description  HH that sucks less. Requires HH++ BDSM and Rena's Battle Sim.
 // @author       xnh0x
 // @match        https://*.hentaiheroes.com/*
