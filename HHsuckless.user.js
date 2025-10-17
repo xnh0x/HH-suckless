@@ -230,6 +230,15 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     /*
+     * trick the browser into thinking there is some media playback by playing
+     *   a 20Hz tone at very low volume (it is inaudible). this prevents the
+     *   game from being throttled while the tab is in the background
+     */
+    if (CONFIG.noThrottle.enabled) {
+        preventThrottling();
+    }
+
+    /*
      * - replace HH++ PoP bar
      */
     if (CONFIG.activities.popBar) {
@@ -522,6 +531,19 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 window.location.reload();
             }
         });
+    }
+
+    function preventThrottling() {
+        const context = new window.AudioContext();
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+
+        oscillator.frequency.setValueAtTime(20, context.currentTime);
+        gain.gain.setValueAtTime(0.001, context.currentTime);
+
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start();
     }
 
     function popTimerBar() {
@@ -2262,6 +2284,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         let config = {
             reload:
                 { enabled: true },
+            noThrottle:
+                { enabled: false },
             news:
                 { enabled: false },
             activities:
@@ -2322,6 +2346,21 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             },
         });
         config.reload.enabled = false;
+
+        registerModule({
+            group: 'suckless',
+            configSchema: {
+                baseKey: 'noThrottle',
+                label: `prevent throttling in background`,
+                default: false,
+            },
+            run() {
+                config.noThrottle = {
+                    enabled: true,
+                };
+            },
+        });
+        config.noThrottle.enabled = false;
 
         registerModule({
             group: 'suckless',
