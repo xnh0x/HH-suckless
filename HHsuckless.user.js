@@ -2347,19 +2347,19 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
         config.reload.enabled = false;
 
-        registerModule({
-            group: 'suckless',
-            configSchema: {
-                baseKey: 'noThrottle',
-                label: `prevent throttling in background`,
-                default: false,
-            },
-            run() {
-                config.noThrottle = {
-                    enabled: true,
-                };
-            },
-        });
+        // registerModule({
+        //     group: 'suckless',
+        //     configSchema: {
+        //         baseKey: 'noThrottle',
+        //         label: `prevent throttling in background`,
+        //         default: false,
+        //     },
+        //     run() {
+        //         config.noThrottle = {
+        //             enabled: true,
+        //         };
+        //     },
+        // });
         config.noThrottle.enabled = false;
 
         registerModule({
