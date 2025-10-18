@@ -48,9 +48,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 upcoming_love_raids: GT_design_upcoming_love_raids,
             }
         },
-        HHBattleSimulator: {
-            simulateFromTeamsEx,
-        },
         HHPlusPlus: {
             Helpers: {
                 doWhenSelectorAvailable,
