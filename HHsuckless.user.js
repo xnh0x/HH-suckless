@@ -633,24 +633,29 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         function updatePopData(firstRun = false) {
             let data = JSON.parse(localStorage.getItem(LS.popData)) || {};
             if (firstRun && window.location.pathname === '/activities.html') {
-                const { pop_data } = unsafeWindow;
-                const popArr = Object.values(pop_data);
-                const times = popArr.reduce((acc, curr) => {
-                    if (curr.time_to_finish) {
-                        const {id_places_of_power, remaining_time, time_to_finish} = curr;
-                        const end_ts = server_now_ts + remaining_time;
-                        acc.push({id_places_of_power, end_ts, time_to_finish})
-                    }
-                    return acc;
-                }, []);
-                data = {
-                    unlocked: popArr.length,
-                    active: times.length,
-                    inactive: popArr.length - times.length,
-                    times: times.sort((a, b) => a.end_ts - b.end_ts),
-                    updated: false,
-                };
-                localStorage.setItem(LS.popData, JSON.stringify(data));
+                parsePopData();
+                exposeFunction(parsePopData);
+
+                function parsePopData() {
+                    const {pop_data} = unsafeWindow;
+                    const popArr = Object.values(pop_data);
+                    const times = popArr.reduce((acc, curr) => {
+                        if (curr.time_to_finish) {
+                            const {id_places_of_power, remaining_time, time_to_finish} = curr;
+                            const end_ts = curr.end_ts ?? server_now_ts + remaining_time;
+                            acc.push({id_places_of_power, end_ts, time_to_finish})
+                        }
+                        return acc;
+                    }, []);
+                    data = {
+                        unlocked: popArr.length,
+                        active: times.length,
+                        inactive: popArr.length - times.length,
+                        times: times.sort((a, b) => a.end_ts - b.end_ts),
+                        updated: false,
+                    };
+                    localStorage.setItem(LS.popData, JSON.stringify(data));
+                }
             }
 
             if (window.location.pathname === '/activities.html' && window.location.search.includes('&index')) {
@@ -2274,6 +2279,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         const sheet = document.createElement('style');
         sheet.textContent = css;
         document.head.appendChild(sheet);
+    }
+
+    function exposeFunction(f) {
+        (unsafeWindow.suckless ??= {})[f.name] = f;
     }
 
     function loadConfig() {
