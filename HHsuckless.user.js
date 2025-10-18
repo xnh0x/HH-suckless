@@ -1625,8 +1625,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             });
 
             if (seasonalData.rankingRewards) {
-                addRewardConfirmation('top_ranking_tab');
-                addRewardConfirmation('event_ranking_tab');
+                doASAP(addRewardConfirmation, '#top_ranking_tab');
+                doASAP(addRewardConfirmation, '#event_ranking_tab');
             }
 
             onAjaxResponse(/action=leaderboard/, (response, opt) => {
@@ -1650,7 +1650,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 }
             });
 
-            addStyle(`#mega-event-tabs .collect_notif.show-chest { display: unset !important; }`);
+            addStyle(`#mega-event-tabs .collect_notif.sl_show_chest { display: unset !important; }`);
         }
 
         function hotAssembly() {
@@ -1686,7 +1686,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             });
 
             if (seasonalData.rankingRewards) {
-                addRewardConfirmation('event_ranking_tab');
+                doASAP(addRewardConfirmation,'#event_ranking_tab');
             }
 
             onAjaxResponse(/action=leaderboard/, (response, opt) => {
@@ -1735,11 +1735,11 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             }
         }
 
-        function addRewardConfirmation(tabId) {
-            const $rewardTab = $(`#${tabId}`);
-            if ($rewardTab.length) {
-                $rewardTab.wrapInner(`<div id="${tabId}_confirm" class="claim-confirmation"></div>`);
-                $rewardTab.find('.collect_notif').addClass('show-chest');
+        function addRewardConfirmation($rankingTab) {
+            const tabId = $rankingTab.attr('id');
+            if ($rankingTab.length) {
+                $rankingTab.wrapInner(`<div id="${tabId}_confirm" class="claim-confirmation"></div>`);
+                $rankingTab.find('.collect_notif').addClass('sl_show_chest');
                 $(`#${tabId}_confirm`).on('click', (e) => {
                     if (confirm('opening ranking tab will claim rewards')) {
                         rewardsClaimed();
@@ -1753,7 +1753,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 seasonalData.rankingRewards = false;
                 localStorage.setItem(LS.seasonal, JSON.stringify(seasonalData));
                 $('#mega-event-tabs .claim-confirmation').off('click');
-                $('.show-chest').removeClass('show-chest');
+                $('.sl_show_chest').removeClass('sl_show_chest');
             }
         }
     }
