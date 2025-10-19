@@ -27,6 +27,30 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 (async function suckless() {
     'use strict';
 
+    const LS = {
+        labFavorites: 'HHsucklessLabFavorites',
+        labShopCycleEnd: 'HHsucklessLabShopCycleEnd',
+        labShopStock: 'HHsucklessLabShopStock',
+        loveRaids: 'HHsucklessLoveRaids',
+        loveRaidsNotifications: 'HHsucklessLoveRaidsNotifications',
+        pog: 'HHsucklessPoG',
+        popData: 'HHsucklessPopData',
+        pov: 'HHsucklessPoV',
+        seasonal: 'HHsucklessSeasonal',
+        seasonChanceThreshold: 'HHsucklessSeasonChanceThreshold',
+        session: 'HHsucklessSession'
+    }
+
+    if (isNutaku()) {
+        const sess = localStorage.getItem(LS.session);
+        const href = window.location.href;
+        if (sess && !href.includes('sess')) {
+            log('fixing session token, reloading page')
+            window.location.replace(`${href}${href.includes('?') ? '&' : '?'}sess=${sess}`)
+            return;
+        }
+    }
+
     if (!unsafeWindow['hhPlusPlusConfig']) {
         log(`waiting for HHPlusPlus`);
         $(document).one('hh++-bdsm:loaded', () => {
@@ -71,19 +95,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     const bind = (obj, methodName) => obj[methodName].bind(obj);
 
     const getGirlDictionary = bind(unsafeWindow.HHPlusPlus.Helpers, 'getGirlDictionary');
-
-    const LS = {
-        labFavorites: 'HHsucklessLabFavorites',
-        labShopCycleEnd: 'HHsucklessLabShopCycleEnd',
-        labShopStock: 'HHsucklessLabShopStock',
-        loveRaids: 'HHsucklessLoveRaids',
-        loveRaidsNotifications: 'HHsucklessLoveRaidsNotifications',
-        pog: 'HHsucklessPoG',
-        popData: 'HHsucklessPopData',
-        pov: 'HHsucklessPoV',
-        seasonal: 'HHsucklessSeasonal',
-        seasonChanceThreshold: 'HHsucklessSeasonChanceThreshold',
-    }
 
     const CONFIG = loadConfig();
 
@@ -2290,6 +2301,11 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         (unsafeWindow.suckless ??= {})[f.name] = f;
     }
 
+    function isNutaku() {
+        return window.location.host.includes('nutaku');
+    }
+
+
     function loadConfig() {
         // defaults
         let config = {
@@ -2355,6 +2371,31 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             },
         });
         config.reload.enabled = false;
+
+        if (isNutaku()) {
+            registerModule({
+                group: 'suckless',
+                configSchema: {
+                    baseKey: 'session',
+                    label: 'automatically fix missing session in url',
+                    default: false,
+                },
+                run() {
+                    /*global PLATFORM_SESS*/
+                    localStorage.setItem(LS.session, PLATFORM_SESS);
+                },
+            });
+            doASAP(($input) => {
+                $input.on('change', (e) => {
+                    if (!e.target.checked) {
+                        // on the seeion error page HH++ and in particular the
+                        // config won't be loaded so the existence of this key
+                        // in localStorage is used to check if this is enabled
+                        localStorage.removeItem(LS.session);
+                    }
+                })
+            }, 'input[name="suckless_session"]');
+        }
 
         registerModule({
             group: 'suckless',
