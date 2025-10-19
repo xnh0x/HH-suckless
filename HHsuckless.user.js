@@ -631,14 +631,14 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
 
         function updatePopData(firstRun = false) {
-            let data = JSON.parse(localStorage.getItem(LS.popData)) || {};
+            let popData = JSON.parse(localStorage.getItem(LS.popData)) || {};
             if (firstRun && window.location.pathname === '/activities.html') {
-                parsePopData();
+                const {pop_data} = unsafeWindow;
+                parsePopData(pop_data);
                 exposeFunction(parsePopData);
 
-                function parsePopData() {
-                    const {pop_data} = unsafeWindow;
-                    const popArr = Object.values(pop_data);
+                function parsePopData(data) {
+                    const popArr = Object.values(data);
                     const times = popArr.reduce((acc, curr) => {
                         if (curr.time_to_finish) {
                             const {id_places_of_power, remaining_time, time_to_finish} = curr;
@@ -647,22 +647,23 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                         }
                         return acc;
                     }, []);
-                    data = {
+
+                    popData = {
                         unlocked: popArr.length,
                         active: times.length,
                         inactive: popArr.length - times.length,
                         times: times.sort((a, b) => a.end_ts - b.end_ts),
                         updated: false,
                     };
-                    localStorage.setItem(LS.popData, JSON.stringify(data));
+                    localStorage.setItem(LS.popData, JSON.stringify(popData));
                 }
             }
 
             if (window.location.pathname === '/activities.html' && window.location.search.includes('&index')) {
                 const { current_pop_data } = unsafeWindow;
                 const $progressBar = $('#pop_info .pop_central_part .hh_bar');
-                if (data.updated || $progressBar.css('display') === 'none') {
-                    return data;
+                if (popData.updated || $progressBar.css('display') === 'none') {
+                    return popData;
                 }
                 if (current_pop_data.remaining_time === 0) {
                     // when manually starting, neither current_pop_data nor pop_data is updated until you
@@ -678,21 +679,21 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     const time_to_finish = Math.ceil(level_power / teamPower * 60);
                     const end_ts = serverNow() + time_to_finish;
 
-                    let times = data.times;
+                    let times = popData.times;
                     const i = times.findIndex((e) => e.id_places_of_power === id_places_of_power);
                     if (i >= 0) {
                         times[i] = {id_places_of_power, end_ts, time_to_finish};
                     } else {
                         times.push({id_places_of_power, end_ts, time_to_finish});
                     }
-                    data.active = times.length;
-                    data.inactive = data.unlocked - data.active;
-                    data.times = times.sort((a, b) => a.end_ts - b.end_ts);
-                    data.updated = true;
+                    popData.active = times.length;
+                    popData.inactive = popData.unlocked - popData.active;
+                    popData.times = times.sort((a, b) => a.end_ts - b.end_ts);
+                    popData.updated = true;
                 }
-                localStorage.setItem(LS.popData, JSON.stringify(data));
+                localStorage.setItem(LS.popData, JSON.stringify(popData));
             }
-            return data;
+            return popData;
         }
 
         function addPopCSS() {
