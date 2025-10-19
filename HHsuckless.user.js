@@ -432,7 +432,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         /*
          * - remove claim all
          */
-        if (CONFIG.pog.enabled) {
+        if (CONFIG.pov.enabled) {
             PoV();
         }
         // save end time stamp for home page timer
@@ -956,9 +956,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             preventAutoPopup(['.info-container .chest-container', '.currency plus', '#mc-selector'], '#shop-payment-tabs', '#common-popups close');
             preventAutoPopup(['#news_button'], '#news_details_popup', '#common-popups close');
         }
-
-        addPovTimer(LS.pov, 'path-of-valor', 'pov_timer', 14 * 24 * 60 * 60);
-        addPovTimer(LS.pog, 'path-of-glory', 'pog_timer', 35 * 24 * 60 * 60);
+        if (CONFIG.pov.home) {
+            addPovTimer(LS.pov, 'path-of-valor', 'pov_timer', 14 * 24 * 60 * 60);
+            addPovTimer(LS.pog, 'path-of-glory', 'pog_timer', 35 * 24 * 60 * 60);
+        }
 
         if (CONFIG.noWBT.enabled) {
             $(`div.world-boss`).remove();
@@ -1826,15 +1827,18 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function PoV() {
-        const { time_remaining } = unsafeWindow;
-        runAndRepeatOnChange('.potions-paths-progress-bar-tiers', () => {
-            if (+time_remaining < 23.5 * 60 * 60) { return; } // only hide until the contest starts on the last day
-            const claimAll = $('.potions-paths-tier.unclaimed.claim-all-rewards')[0];
-            if (claimAll) {
-                claimAll.classList.remove('claim-all-rewards');
-                claimAll.querySelector('#claim-all').style.display = 'none';
-            }
-        });
+        if (CONFIG.pov.hideClaimAll) {
+            const { time_remaining } = unsafeWindow;
+            runAndRepeatOnChange('.potions-paths-progress-bar-tiers', () => {
+                if (+time_remaining < 23.5 * 60 * 60) { return; } // only hide until the contest starts on the last day
+                const claimAll = $('.potions-paths-tier.unclaimed.claim-all-rewards')[0];
+                if (claimAll) {
+                    claimAll.classList.remove('claim-all-rewards');
+                    claimAll.querySelector('#claim-all').style.display = 'none';
+                }
+            });
+        }
+
         preventAutoPopup(['button.purchase-pass'], '#pov_pog_passes_popup', '#pov_pog_passes_popup close');
     }
 
@@ -2319,9 +2323,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             editTeam:
                 { enabled: false },
             pov:
-                { enabled: true },
-            pog:
-                { enabled: true },
+                { enabled: true, home: true, hideClaimAll: false },
             noWBT:
                 { enabled: false },
         };
@@ -2636,20 +2638,26 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             group: 'suckless',
             configSchema: {
                 baseKey: 'pov',
-                label: 'hide PoV/PoG claim all until the last day',
+                label: 'improved PoV/PoG',
                 default: true,
+                subSettings: [
+                    { key: 'home', default: true,
+                        label: 'add remaining time on home page',
+                    },
+                    { key: 'hideClaimAll', default: false,
+                        label: 'hide PoV/PoG claim all until the last day',
+                    },
+                ],
             },
-            run() {
+            run(subSettings) {
                 config.pov = {
                     enabled: true,
-                };
-                config.pog = {
-                    enabled: true,
+                    home: subSettings.home,
+                    hideClaimAll: subSettings.hideClaimAll,
                 };
             },
         });
         config.pov.enabled = false;
-        config.pog.enabled = false;
 
         registerModule({
             group: 'suckless',
