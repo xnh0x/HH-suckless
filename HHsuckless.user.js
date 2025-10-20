@@ -634,7 +634,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 $popBar.find('.bar.red').css('width', '100%');
                 $popBar.find('.over span[rel="increment_txt"]').css('display', 'none');
                 $popBar.find('.hudPop_mix_icn').attr('tooltip', '<span class="orange">Ready</span>');
-                if (!(window.location.pathname === '/activities.html' && window.location.search.includes('&index'))) {
+                if (!(window.location.pathname === '/activities.html')) {
                     // pop data can't change on the current page so there is no need to keep updating
                     clearInterval(popBarUpdater);
                 }
