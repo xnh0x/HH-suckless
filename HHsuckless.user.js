@@ -16,6 +16,9 @@
 // @downloadURL  https://github.com/xnh0x/HH-suckless/raw/refs/heads/master/HHsuckless.user.js
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=hentaiheroes.com
 // @grant        GM_info
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @grant        GM_deleteValue
 // @grant        unsafeWindow
 // ==/UserScript==
 
@@ -27,22 +30,117 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 (async function suckless() {
     'use strict';
 
-    const LS = {
-        labFavorites: 'HHsucklessLabFavorites',
-        labShopCycleEnd: 'HHsucklessLabShopCycleEnd',
-        labShopStock: 'HHsucklessLabShopStock',
-        loveRaids: 'HHsucklessLoveRaids',
-        loveRaidsNotifications: 'HHsucklessLoveRaidsNotifications',
-        pog: 'HHsucklessPoG',
-        popData: 'HHsucklessPopData',
-        pov: 'HHsucklessPoV',
-        seasonal: 'HHsucklessSeasonal',
-        seasonChanceThreshold: 'HHsucklessSeasonChanceThreshold',
-        session: 'HHsucklessSession'
+    class Storage {
+        static #default = {
+            labFavorites: [],
+            labShopCycleEnd: null,
+            labShopStock: [],
+            loveRaids: [],
+            loveRaidsNotifications: [],
+            pog: null,
+            popData: null,
+            pov: null,
+            seasonal: null,
+            seasonChanceThreshold: 100,
+            session: null,
+        }
+
+        static #handle(key, value) {
+            const {HH_UNIVERSE: game, shared: {Hero: {infos: {id}}}} = unsafeWindow;
+            const fullKey = `${game}_${id}_${key}`;
+            switch (value) {
+                case null: return GM_getValue(fullKey, this.#default[key]);
+                case undefined: GM_deleteValue(fullKey); return;
+                default: GM_setValue(fullKey, value); return;
+            }
+        }
+
+        static labFavorites(value = null) {
+            return this.#handle('labFavorites', value);
+        }
+
+        static labShopCycleEnd(value = null) {
+            return this.#handle('labShopCycleEnd', value);
+        }
+
+        static labShopStock(value = null) {
+            return this.#handle('labShopStock', value);
+        }
+
+        static loveRaids(value = null) {
+            return this.#handle('loveRaids', value);
+        }
+
+        static loveRaidsNotifications(value = null) {
+            return this.#handle('loveRaidsNotifications', value);
+        }
+
+        static pog(value = null) {
+            return this.#handle('pog', value);
+        }
+
+        static popData(value = null) {
+            return this.#handle('popData', value);
+        }
+
+        static pov(value = null) {
+            return this.#handle('pov', value);
+        }
+
+        static seasonal(value = null) {
+            return this.#handle('seasonal', value);
+        }
+
+        static seasonChanceThreshold(value = null) {
+            return this.#handle('seasonChanceThreshold', value);
+        }
+
+        static session(value = null) {
+            return this.#handle('session', value);
+        }
+    }
+
+    { // migrate existing data, delete in future version
+        const LS = {
+            session: 'HHsucklessSession',
+        }
+        const LSN = {
+            labShopCycleEnd: 'HHsucklessLabShopCycleEnd',
+            seasonChanceThreshold: 'HHsucklessSeasonChanceThreshold',
+            pog: 'HHsucklessPoG',
+            pov: 'HHsucklessPoV',
+        }
+        const LSJ = {
+            labFavorites: 'HHsucklessLabFavorites',
+            popData: 'HHsucklessPopData',
+            loveRaids: 'HHsucklessLoveRaids',
+            loveRaidsNotifications: 'HHsucklessLoveRaidsNotifications',
+            seasonal: 'HHsucklessSeasonal',
+            labShopStock: 'HHsucklessLabShopStock',
+        }
+
+        Storage.session(localStorage.getItem(LS.session));
+        localStorage.removeItem(LS.session);
+
+        for (const [k, v] of Object.entries(LSN)) {
+            const value = localStorage.getItem(v);
+            if (value) {
+                Storage[k](+value);
+                localStorage.removeItem(v);
+            }
+        }
+
+        for (const [k, v] of Object.entries(LSJ)) {
+            const value = localStorage.getItem(v);
+            if (value) {
+                Storage[k](JSON.parse(value));
+                localStorage.removeItem(v);
+            }
+        }
     }
 
     if (isNutaku()) {
-        const sess = localStorage.getItem(LS.session);
+        const sess = Storage.session();
         const href = window.location.href;
         if (sess && !href.includes('sess')) {
             log('fixing session token, reloading page')
@@ -102,7 +200,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     class FavoriteLabGirls {
         constructor() {
-            this.favoriteIds = JSON.parse(localStorage.getItem(LS.labFavorites)) || [];
+            this.favoriteIds = Storage.labFavorites();
             this.toggle = $('<div class="favourite-toggle"></div>');
             this.addCSS();
         }
@@ -180,21 +278,16 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
         removeFavorite(id) {
             this.favoriteIds = this.favoriteIds.filter(e => e !== +id);
-            this.updateFavorites();
+            Storage.labFavorites(this.favoriteIds);
         }
 
         addFavorite(id) {
             this.favoriteIds.push(+id);
-            this.updateFavorites();
+            Storage.labFavorites(this.favoriteIds);
         }
 
         isFavorite(id) {
             return this.favoriteIds.includes(+id);
-        }
-
-        updateFavorites() {
-            localStorage.setItem(LS.labFavorites, JSON.stringify(this.favoriteIds));
-            log(this.favoriteIds);
         }
 
         prepareGirlElement(girl_element, idAttribute, top7 = null, girlList = null) {
@@ -436,7 +529,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
         // save end time stamp for home page timer
         const { time_remaining } = unsafeWindow;
-        localStorage.setItem(LS.pov, `${server_now_ts + (+time_remaining)}`);
+        Storage.pov(server_now_ts + (+time_remaining));
     }
 
     if (window.location.pathname === '/path-of-glory.html') {
@@ -448,7 +541,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
         // save end time stamp for home page timer
         const { time_remaining } = unsafeWindow;
-        localStorage.setItem(LS.pog, `${server_now_ts + (+time_remaining)}`);
+        Storage.pog(server_now_ts + (+time_remaining));
     }
 
     if (window.location.pathname === '/labyrinth-pool-select.html') {
@@ -559,12 +652,12 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             const { current_pop_data } = unsafeWindow;
             const $claimButton = $('.pop_central_part button[rel="pop_claim"]');
             $claimButton.on('click', () => {
-                let data = JSON.parse(localStorage.getItem(LS.popData));
+                let data = Storage.popData();
                 data.times = data.times.filter((e) => e.id_places_of_power !== current_pop_data.id_places_of_power);
                 data.active = data.times.length;
                 data.inactive = data.unlocked - data.active;
                 current_pop_data.remaining_time = 0;
-                localStorage.setItem(LS.popData, JSON.stringify(data));
+                Storage.popData(data);
             });
         }
         addPopCSS();
@@ -642,9 +735,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
 
         function updatePopData(firstRun = false) {
-            let popData = JSON.parse(localStorage.getItem(LS.popData)) || {};
+            let popData = Storage.popData();
             if (firstRun && window.location.pathname === '/activities.html') {
-                const {pop_data} = unsafeWindow;
+                const { pop_data } = unsafeWindow;
                 parsePopData(pop_data);
                 exposeFunction(parsePopData);
 
@@ -666,7 +759,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                         times: times.sort((a, b) => a.end_ts - b.end_ts),
                         updated: false,
                     };
-                    localStorage.setItem(LS.popData, JSON.stringify(popData));
+                    Storage.popData(popData);
                 }
             }
 
@@ -702,7 +795,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     popData.times = times.sort((a, b) => a.end_ts - b.end_ts);
                     popData.updated = true;
                 }
-                localStorage.setItem(LS.popData, JSON.stringify(popData));
+                Storage.popData(popData);
             }
             return popData;
         }
@@ -969,8 +1062,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             preventAutoPopup(['#news_button'], '#news_details_popup', '#common-popups close');
         }
         if (CONFIG.pov.home) {
-            addPovTimer(LS.pov, 'path-of-valor', 'pov_timer', 14 * 24 * 60 * 60);
-            addPovTimer(LS.pog, 'path-of-glory', 'pog_timer', 35 * 24 * 60 * 60);
+            addPovTimer('pov', 'path-of-valor', 'pov_timer', 14 * 24 * 60 * 60);
+            addPovTimer('pog', 'path-of-glory', 'pog_timer', 35 * 24 * 60 * 60);
         }
 
         if (CONFIG.noWBT.enabled) {
@@ -982,7 +1075,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
 
         function setNonCompletedRaidCounts() {
-            const raids = JSON.parse(localStorage.getItem(LS.loveRaids));
+            const raids = Storage.loveRaids();
             const { ongoing_love_raids_count, upcoming_love_raids_count } = unsafeWindow;
             if (!raids) return;
             let expired = 0, ongoing = 0, upcoming = 0;
@@ -1006,8 +1099,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
 
         function setRaidNotification() {
-            const raids = JSON.parse(localStorage.getItem(LS.loveRaids));
-            const raidNotifs = JSON.parse(localStorage.getItem(LS.loveRaidsNotifications));
+            const raids = Storage.loveRaids();
+            const raidNotifs = Storage.loveRaidsNotifications();
             if (!raids || !raidNotifs) return;
             const showNotif = raids.reduce((result, raid) => {
                 const ongoing = raid.start < server_now_ts && raid.end > server_now_ts;
@@ -1026,14 +1119,14 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             }
         }
 
-        function addPovTimer(storageKey, rel, id, increment) {
-            let end_ts = +localStorage.getItem(storageKey);
+        function addPovTimer(key, rel, id, increment) {
+            let end_ts = Storage[key]();
             if (end_ts) {
                 while (serverNow() > end_ts) {
                     // if a device hasn't been used in a while it might be more than one path out of date
                     end_ts += increment;
                 }
-                localStorage.setItem(storageKey, `${end_ts}`);
+                Storage[key](end_ts);
                 // position: absolute; left: 6px; bottom: 14px;
                 const $potionText = $(`a[rel="${rel}"] .pov-widget .white_text`);
                 const $potionsBar = $(`a[rel="${rel}"] .pov-widget .pov-tier-bar`);
@@ -1058,7 +1151,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
 
         function addSeasonalInfo() {
-            let seasonalData = JSON.parse(localStorage.getItem(LS.seasonal) ?? '{}');
+            let seasonalData = Storage.seasonal();
             if (seasonalData.type === undefined
                 || !seasonalData.seasonalEnd
                 || serverNow() > seasonalData.seasonalEnd) {
@@ -1085,7 +1178,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     // the next ranking will end three days after the last one
                     seasonalData.rankingEnd += 3 * 24 * 60 * 60;
                     seasonalData.rankingRewards = true;
-                    localStorage.setItem(LS.seasonal, JSON.stringify(seasonalData));
+                    Storage.seasonal(seasonalData);
                 }
 
                 const $megaEvent = $(`div.over[rel="mega-event"]`);
@@ -1364,8 +1457,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         /*global love_raids*/
 
         // save raid times for home page counts
-        localStorage.setItem(LS.loveRaids,
-            JSON.stringify(love_raids.reduce((result, raid) => {
+        Storage.loveRaids(love_raids.reduce((result, raid) => {
                 const { id_raid, all_is_owned } = raid;
                 let start, end;
                 if (raid['status'] === 'ongoing') {
@@ -1379,7 +1471,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 }
                 result.push({ all_is_owned, id_raid, start, end });
                 return result;
-            }, []))
+            }, [])
         );
 
         const girls = await getGirlDictionary()
@@ -1482,7 +1574,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
 
         function addNotificationToggle() {
-            const raidNotifs = JSON.parse(localStorage.getItem(LS.loveRaidsNotifications)) || [];
+            const raidNotifs = Storage.loveRaidsNotifications();
             $('.raid-card:not(.grey-overlay)').each(function () {
                 const id_raid = +$(this).attr('id_raid');
                 const $raidName = $(this).find('.raid-name');
@@ -1499,8 +1591,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                         raidNotifs.push(id_raid);
                         $raidName.attr('data-notify', 'true');
                     }
-                    localStorage.setItem(LS.loveRaidsNotifications,
-                        JSON.stringify(raidNotifs));
+                    Storage.loveRaidsNotifications(raidNotifs);
                 });
             });
 
@@ -1548,7 +1639,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             return;
         }
 
-        let seasonalData = JSON.parse(localStorage.getItem(LS.seasonal) ?? '{}');
+        let seasonalData = Storage.seasonal();
         if (seasonalData.type !== type || server_now_ts > seasonalData.seasonalEnd) {
             seasonalData = { type: type, new: true }
         }
@@ -1560,7 +1651,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         } else if (type === 3) {
             hotAssembly();
         }
-        localStorage.setItem(LS.seasonal, JSON.stringify(seasonalData));
+        Storage.seasonal(seasonalData);
 
         function getType() {
             const { mega_tiers_data } = unsafeWindow;
@@ -1588,7 +1679,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             preventAutoPopup(['a.pass-reminder'], '#pass_reminder_popup', '#pass_reminder_popup close');
 
             if (seasonalData.new) {
-                seasonalData = { type: 1, new: false,
+                seasonalData = {
+                    type: 1, new: false,
                     seasonalEnd: server_now_ts + mega_event_time_remaining,
                 };
             }
@@ -1618,7 +1710,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
         function lustyRace() {
             if (seasonalData.new) {
-                seasonalData = { type: 2, new: false,
+                seasonalData = {
+                    type: 2, new: false,
                     seasonalEnd: server_now_ts + mega_event_time_remaining,
                     rankingEnd: null, rankingRewards: false,
                 };
@@ -1639,7 +1732,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
             doWhenSelectorAvailable('.ranking-timer.timer', () => {
                 seasonalData.rankingEnd = Math.round((serverNow() + parseInt($('.ranking-timer.timer').attr('data-time-stamp'))) / 100) * 100;
-                localStorage.setItem(LS.seasonal, JSON.stringify(seasonalData));
+                Storage.seasonal(seasonalData);
             });
 
             if (seasonalData.rankingRewards) {
@@ -1680,7 +1773,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             }
 
             if (seasonalData.new) {
-                seasonalData = { type: 3, new: false,
+                seasonalData = {
+                    type: 3, new: false,
                     seasonalEnd: server_now_ts + mega_event_time_remaining,
                     rankingEnd: null, rankingRewards: false,
                 };
@@ -1700,11 +1794,11 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
             doWhenSelectorAvailable('.ranking-timer.timer', () => {
                 seasonalData.rankingEnd = Math.round((serverNow() + parseInt($('.ranking-timer.timer').attr('data-time-stamp'))) / 100) * 100;
-                localStorage.setItem(LS.seasonal, JSON.stringify(seasonalData));
+                Storage.seasonal(seasonalData);
             });
 
             if (seasonalData.rankingRewards) {
-                doASAP(addRewardConfirmation,'#event_ranking_tab');
+                doASAP(addRewardConfirmation, '#event_ranking_tab');
             }
 
             onAjaxResponse(/action=leaderboard/, (response, opt) => {
@@ -1769,7 +1863,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
             function rewardsClaimed() {
                 seasonalData.rankingRewards = false;
-                localStorage.setItem(LS.seasonal, JSON.stringify(seasonalData));
+                Storage.seasonal(seasonalData);
                 $('#mega-event-tabs .claim-confirmation').off('click');
                 $('.sl_show_chest').removeClass('sl_show_chest');
             }
@@ -1928,20 +2022,20 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
             function updateCycleEnd(force = false) {
                 /*global cycle_end_in_seconds*/
-                const oldCycleEnd = +localStorage.getItem(LS.labShopCycleEnd);
+                const oldCycleEnd = Storage.labShopCycleEnd();
                 const twelveHours = 12 * 60 * 60;
 
                 const newShopCycleEnd = force || detectRestock() || (oldCycleEnd < server_now_ts)
                     ? Math.min(server_now_ts + cycle_end_in_seconds,  // shop will restock next reset
                         serverNow() + twelveHours)  // shop will restock in 12h
                     : oldCycleEnd;  // shop restock hasn't happened yet
-                localStorage.setItem(LS.labShopCycleEnd, newShopCycleEnd.toString());
+                Storage.labShopCycleEnd(newShopCycleEnd);
                 return newShopCycleEnd;
             }
         });
 
         function detectRestock() {
-            const oldStock = JSON.parse(localStorage.getItem(LS.labShopStock)) || [];
+            const oldStock = Storage.labShopStock();
             const currentStock = updateStock();
             if (!currentStock) { return false; }
             return currentStock.reduce((acc, curr, i) => {
@@ -1960,7 +2054,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 log(`couldn't read inventory`);
                 return null;
             }
-            localStorage.setItem(LS.labShopStock, JSON.stringify(currentStock));
+            Storage.labShopStock(currentStock);
             return currentStock;
         }
 
@@ -2382,7 +2476,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 },
                 run() {
                     /*global PLATFORM_SESS*/
-                    localStorage.setItem(LS.session, PLATFORM_SESS);
+                    Storage.session(PLATFORM_SESS);
                 },
             });
             doASAP(($input) => {
@@ -2390,8 +2484,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     if (!e.target.checked) {
                         // on the seeion error page HH++ and in particular the
                         // config won't be loaded so the existence of this key
-                        // in localStorage is used to check if this is enabled
-                        localStorage.removeItem(LS.session);
+                        // in storage is used to check if this is enabled
+                        Storage.session(undefined);
                     }
                 })
             }, 'input[name="suckless_session"]');
@@ -2599,7 +2693,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 config.season = {
                     enabled: true,
                     useThreshold: subSettings.useThreshold,
-                    threshold: parseFloat(localStorage.getItem(LS.seasonChanceThreshold) ?? '100'),
+                    threshold: Storage.seasonChanceThreshold(),
                 };
             },
         });
@@ -2607,12 +2701,12 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
         doWhenSelectorAvailable('#season-threshold-input', () => {
             const $input = $('#season-threshold-input');
-            let threshold = parseFloat(localStorage.getItem(LS.seasonChanceThreshold) ?? '100');
+            let threshold = Storage.seasonChanceThreshold();
             $input.val(threshold.toString());
             $input.on('focusout', () => {
                 const input = parseFloat($input.val());
                 threshold = isNaN(input) ? 0 : Math.min(100, Math.max(0, input));
-                localStorage.setItem(LS.seasonChanceThreshold, threshold.toString());
+                Storage.seasonChanceThreshold(threshold);
                 $input.val(threshold.toString());
             });
         });
