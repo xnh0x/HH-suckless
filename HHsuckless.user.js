@@ -2332,11 +2332,12 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
     }
 
-    function doASAP(callback, selector, condition = (jQ) => jQ.length) {
+    function doASAP(callback, selector, condition = (jQ) => jQ.length, waitMessage = null) {
         const $selected = $(selector);
         if (condition($selected)) {
             callback($selected);
         } else {
+            if (waitMessage) log(waitMessage);
             const observer = new MutationObserver(() => {
                 const $selected = $(selector);
                 if (condition($selected)) {
