@@ -40,7 +40,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             pog: null,
             popData: null,
             pov: null,
-            seasonal: null,
+            seasonal: { type: undefined },
             seasonChanceThreshold: 100,
             session: null,
         }
