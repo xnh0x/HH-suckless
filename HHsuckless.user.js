@@ -1389,17 +1389,20 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         function pickBestOpponent() {
             const chance = Array.from(document.querySelectorAll('.sim-chance')).map((el) => parseFloat(el.innerText));
             const mojo = Array.from(document.querySelectorAll('.sim-mojo')).map((el) => parseFloat(el.innerText));
-            let best = 0;
+            let best;
             chance.forEach((c, i) => {
-                if (CONFIG.season.useThreshold && chance[i] >= CONFIG.season.threshold) {
-                    if (mojo[i] > mojo[best]) best = i;
+                if (CONFIG.season.useThreshold) {
+                    if (chance[i] >= CONFIG.season.threshold
+                        && (best === undefined || mojo[i] > mojo[best])) {
+                        best = i;
+                    }
                     return;
                 }
-                if (c < chance[best]) return;
-                if (c > chance[best] || mojo[i] > mojo[best]) best = i;
+                if (best !== undefined && c < chance[best]) return;
+                if (best === undefined || c > chance[best] || mojo[i] > mojo[best]) best = i;
             });
             const bestOpponent = document.querySelector(`.season_arena_opponent_container.opponent-${best}`);
-            if (best > 0) {
+            if (best !== undefined && best > 0) {
                 const firstOpponent = document.querySelector(`.season_arena_opponent_container.opponent-0`);
                 bestOpponent.remove();
                 firstOpponent.before(bestOpponent);
@@ -1409,7 +1412,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
             // space key starts battle against the best opponent
             if (shared.Hero.energies.kiss.amount) {
-                if (!(CONFIG.season.useThreshold && chance[best] < CONFIG.season.threshold)) {
+                if (best !== undefined && !(CONFIG.season.useThreshold && chance[best] < CONFIG.season.threshold)) {
                     $(document).on('keydown', (e) => {
                         if (e.key === ' ') {
                             $(document).off('keydown');
