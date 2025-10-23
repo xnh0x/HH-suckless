@@ -1375,8 +1375,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function seasonArena() {
-        log('waiting for rena');
-        doASAP(sortOpponents, '.sim-chance, .sim-mojo', jQ => jQ.length === 6);
+        doASAP(pickBestOpponent, '.sim-chance, .sim-mojo', jQ => jQ.length === 6, 'waiting for rena');
 
         // 1,2,3 keys start battles against the three opponents
         $(document).on('keydown', (e) => {
@@ -1387,14 +1386,17 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             }
         });
 
-        function sortOpponents() {
-            const cls = {main:'.sim-chance', tie:'.sim-mojo'};
-            const mainCriterion = Array.from(document.querySelectorAll(cls.main)).map((el) => parseFloat(el.innerText));
-            const tieBreaker = Array.from(document.querySelectorAll(cls.tie)).map((el) => parseFloat(el.innerText));
+        function pickBestOpponent() {
+            const chance = Array.from(document.querySelectorAll('.sim-chance')).map((el) => parseFloat(el.innerText));
+            const mojo = Array.from(document.querySelectorAll('.sim-mojo')).map((el) => parseFloat(el.innerText));
             let best = 0;
-            mainCriterion.forEach((c, i) => {
-                if (c < mainCriterion[best]) return;
-                if (c > mainCriterion[best] || tieBreaker[i] > tieBreaker[best]) best = i;
+            chance.forEach((c, i) => {
+                if (CONFIG.season.useThreshold && chance[i] >= CONFIG.season.threshold) {
+                    if (mojo[i] > mojo[best]) best = i;
+                    return;
+                }
+                if (c < chance[best]) return;
+                if (c > chance[best] || mojo[i] > mojo[best]) best = i;
             });
             const bestOpponent = document.querySelector(`.season_arena_opponent_container.opponent-${best}`);
             if (best > 0) {
@@ -1406,16 +1408,22 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             }
 
             // space key starts battle against the best opponent
-            if (shared.Hero.energies.kiss.amount
-                && !(CONFIG.season.useThreshold && mainCriterion[best] < CONFIG.season.threshold)) {
-                $(document).on('keydown', (e) => {
-                    if (e.key === ' ') {
-                        $(document).off('keydown');
-                        clickOnElement(bestOpponent.querySelector(`.green_button_L.btn_season_perform`));
-                    }
-                });
+            if (shared.Hero.energies.kiss.amount) {
+                if (!(CONFIG.season.useThreshold && chance[best] < CONFIG.season.threshold)) {
+                    $(document).on('keydown', (e) => {
+                        if (e.key === ' ') {
+                            $(document).off('keydown');
+                            clickOnElement(bestOpponent.querySelector(`.green_button_L.btn_season_perform`));
+                        }
+                    });
+                    log('best opponent chosen');
+                    return;
+                }
+            } else {
+                log('none selected for space bar: out of kisses');
+                return;
             }
-            log('opponents sorted');
+            log('none selected for space bar: opponents suck');
         }
     }
 
@@ -2686,7 +2694,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 default: true,
                 subSettings: [
                     { key: 'useThreshold', default: false,
-                        label: `disable space bar when chance is below <span><input type="text" id="season-threshold-input" placeholder="" style="text-align: center; height: 1rem; width: 2rem;">%</span>`,
+                        label: `pick opponent by mojo if chance is at least <span><input type="text" id="season-threshold-input" placeholder="" style="text-align: center; height: 1rem; width: 2rem;">%</span> and disable space bar if there are none`,
                     },
                 ],
             },
