@@ -1022,7 +1022,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             preventAutoPopup(['.info-container .chest-container', '.currency plus', '#mc-selector'], '#shop-payment-tabs', '#common-popups close');
             preventAutoPopup(['#news_button'], '#news_details_popup', '#common-popups close');
         }
-        if (CONFIG.pov.home) {
+        if (CONFIG.pov.enabled && CONFIG.pov.home) {
             addPovTimer('pov', 'path-of-valor', 'pov_timer', 14 * 24 * 60 * 60);
             addPovTimer('pog', 'path-of-glory', 'pog_timer', 35 * 24 * 60 * 60);
         }
