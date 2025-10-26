@@ -2332,15 +2332,15 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     function preventAutoPopup(manualButtons, check, close) {
         let manualClick = false;
         for (const button of manualButtons) {
-            $(button).on('click', () => {
-                manualClick = true;
-            });
+            doASAP(($btn)=>{
+                $btn.on('click', () => { manualClick = true; })
+            }, button);
         }
-        doWhenSelectorAvailable(check, ()=>{
+        doASAP(()=>{
             if (!manualClick) {
                 clickOnElement($(close)[0]);
             }
-        });
+        }, check);
     }
 
     function doASAP(callback, selector, condition = (jQ) => jQ.length, waitMessage = null) {
