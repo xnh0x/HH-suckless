@@ -100,45 +100,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
     }
 
-    { // migrate existing data, delete in future version
-        const LS = {
-            session: 'HHsucklessSession',
-        }
-        const LSN = {
-            labShopCycleEnd: 'HHsucklessLabShopCycleEnd',
-            seasonChanceThreshold: 'HHsucklessSeasonChanceThreshold',
-            pog: 'HHsucklessPoG',
-            pov: 'HHsucklessPoV',
-        }
-        const LSJ = {
-            labFavorites: 'HHsucklessLabFavorites',
-            popData: 'HHsucklessPopData',
-            loveRaids: 'HHsucklessLoveRaids',
-            loveRaidsNotifications: 'HHsucklessLoveRaidsNotifications',
-            seasonal: 'HHsucklessSeasonal',
-            labShopStock: 'HHsucklessLabShopStock',
-        }
-
-        Storage.session(localStorage.getItem(LS.session));
-        localStorage.removeItem(LS.session);
-
-        for (const [k, v] of Object.entries(LSN)) {
-            const value = localStorage.getItem(v);
-            if (value) {
-                Storage[k](+value);
-                localStorage.removeItem(v);
-            }
-        }
-
-        for (const [k, v] of Object.entries(LSJ)) {
-            const value = localStorage.getItem(v);
-            if (value) {
-                Storage[k](JSON.parse(value));
-                localStorage.removeItem(v);
-            }
-        }
-    }
-
     if (isNutaku()) {
         const sess = Storage.session();
         const href = window.location.href;
