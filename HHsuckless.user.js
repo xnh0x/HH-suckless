@@ -49,64 +49,66 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             const {HH_UNIVERSE: game, shared: {Hero: {infos: {id}}}} = unsafeWindow;
             const fullKey = `${game}_${id}_${key}`;
             switch (value) {
-                case null: return GM_getValue(fullKey, this.#default[key]);
-                case undefined: GM_deleteValue(fullKey); return;
+                case undefined: return GM_getValue(fullKey, this.#default[key]);
+                case null: GM_deleteValue(fullKey); return;
                 default: GM_setValue(fullKey, value); return;
             }
         }
 
-        static labFavorites(value = null) {
+        static labFavorites(value) {
             return this.#handle('labFavorites', value);
         }
 
-        static labShopCycleEnd(value = null) {
+        static labShopCycleEnd(value) {
             return this.#handle('labShopCycleEnd', value);
         }
 
-        static labShopStock(value = null) {
+        static labShopStock(value) {
             return this.#handle('labShopStock', value);
         }
 
-        static loveRaids(value = null) {
+        static loveRaids(value) {
             return this.#handle('loveRaids', value);
         }
 
-        static loveRaidsNotifications(value = null) {
+        static loveRaidsNotifications(value) {
             return this.#handle('loveRaidsNotifications', value);
         }
 
-        static pog(value = null) {
+        static pog(value) {
             return this.#handle('pog', value);
         }
 
-        static popData(value = null) {
+        static popData(value) {
             return this.#handle('popData', value);
         }
 
-        static pov(value = null) {
+        static pov(value) {
             return this.#handle('pov', value);
         }
 
-        static seasonal(value = null) {
+        static seasonal(value) {
             return this.#handle('seasonal', value);
         }
 
-        static seasonChanceThreshold(value = null) {
+        static seasonChanceThreshold(value) {
             return this.#handle('seasonChanceThreshold', value);
         }
 
-        static session(value = null) {
+        static session(value) {
             return this.#handle('session', value);
         }
     }
 
     if (isNutaku()) {
-        const sess = Storage.session();
         const href = window.location.href;
-        if (sess && !href.includes('sess')) {
-            log('fixing session token, reloading page')
-            window.location.replace(`${href}${href.includes('?') ? '&' : '?'}sess=${sess}`)
-            return;
+        if (!href.includes('sess')) {
+            const sess = Storage.session();
+            if (sess) {
+                log('fixing session token, reloading page')
+                window.location.replace(`${href}${href.includes('?') ? '&' : '?'}sess=${sess}`)
+                return;
+            }
         }
     }
 
@@ -2458,7 +2460,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                         // on the seeion error page HH++ and in particular the
                         // config won't be loaded so the existence of this key
                         // in storage is used to check if this is enabled
-                        Storage.session(undefined);
+                        Storage.session(null);
                     }
                 })
             }, 'input[name="suckless_session"]');
