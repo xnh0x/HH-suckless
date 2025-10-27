@@ -616,6 +616,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         oscillator.connect(gain);
         gain.connect(context.destination);
         oscillator.start();
+        // when a page loads audio playback is automatically suspended and not
+        // allowed to resume until the first user interaction
+        if (context.state === 'suspended')
+            $(document).one('click', ()=>{ context.resume() });
     }
 
     function popTimerBar() {
