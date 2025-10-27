@@ -96,7 +96,15 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
 
         static session(value) {
-            return this.#handle('session', value);
+            // HH_UNIVERSE and shared aren't defined on the session error page
+            // so the normal #handle() can't be used. the host will make it
+            // specific to the game but it can't be tied to the id like the others
+            const key = `${window.location.host}_session`;
+            switch (value) {
+                case undefined: return GM_getValue(key, this.#default[key]);
+                case null: GM_deleteValue(key); return;
+                default: GM_setValue(key, value); return;
+            }
         }
     }
 
