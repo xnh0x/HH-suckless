@@ -481,7 +481,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
          *     scene) for consistency
          * - switch scene resolution from 800x450 to 1600x900
          */
-        quest();
+        if (CONFIG.quest.enabled) {
+            quest();
+        }
     }
 
     if (window.location.pathname === '/waifu.html') {
