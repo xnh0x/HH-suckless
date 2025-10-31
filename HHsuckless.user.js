@@ -2440,6 +2440,18 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             name: 'suckless'
         });
 
+        addStyle(`
+            h4.suckless.selected::after {
+                content: 'v${GM_info.script.version}';
+                display: block;
+                position: absolute;
+                top: -10px;
+                right: -15px;
+                font-size: 10px;
+            }
+            h4.suckless.selected:last-child::after { right: 0; }
+        `);
+
         registerModule({
             group: 'suckless',
             configSchema: {
