@@ -30,11 +30,15 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 (async function suckless() {
     'use strict';
 
+    const LAB_STRATEGIES =
+        { xp: 1, coins: 2, resources: 3 };
+
     class Storage {
         static #default = {
             labFavorites: [],
             labShopCycleEnd: null,
             labShopStock: [],
+            labPathStrategy: LAB_STRATEGIES.xp,
             loveRaids: [],
             loveRaidsNotifications: [],
             pog: null,
@@ -65,6 +69,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
         static labShopStock(value) {
             return this.#handle('labShopStock', value);
+        }
+
+        static labPathStrategy(value) {
+            return this.#handle('labPathStrategy', value);
         }
 
         static loveRaids(value) {
@@ -1937,7 +1945,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function labyrinthPoolSelect() {
-        doWhenSelectorAvailable('.labyrinth-pool-select-container .girl-grid', async () => {
+        if (CONFIG.lab.favorites)
+            doASAP(favorites, '.labyrinth-pool-select-container .girl-grid');
+
+        async function favorites() {
             const { owned_girls } = unsafeWindow;
             const favorites = new FavoriteLabGirls();
 
@@ -1954,12 +1965,26 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
                 moveTop7Up(top7, '.girl-grid .girl-container', 'id_girl');
             });
-        });
+        }
     }
 
     function labyrinth() {
-        // favorites
-        doWhenSelectorAvailable('#squad_tab_container .squad-container .girl-grid', async () => {
+        if (CONFIG.lab.favorites)
+            doASAP(favorites, '#squad_tab_container .squad-container .girl-grid');
+
+        if (CONFIG.lab.shop)
+            doASAP(shop, '#shop_tab_container .item-container .slot');
+
+        if (CONFIG.lab.path) {
+            addStyle(`
+                .hex-container img:not(.optimal-path) {
+                    filter: brightness(.6) grayscale(.6);
+                }
+            `);
+            highlightPath();
+        }
+
+        async function favorites() {
             const { girl_squad } = unsafeWindow;
             const favorites = new FavoriteLabGirls();
 
@@ -1972,10 +1997,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
                 moveTop7Up(top7, '.girl-grid .girl-container', 'id');
             });
-        });
+        }
 
-        // shop timer
-        doWhenSelectorAvailable('#shop_tab_container .item-container .slot', async () => {
+        async function shop() {
             const currentShopCycleEnd = updateCycleEnd();
 
             await runAndRepeatOnChange('#shop_tab_container', setShopTimer);
@@ -2019,92 +2043,225 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     : oldCycleEnd;  // shop restock hasn't happened yet
                 Storage.labShopCycleEnd(newShopCycleEnd);
                 return newShopCycleEnd;
-            }
-        });
 
-        function detectRestock() {
-            const oldStock = Storage.labShopStock();
-            const currentStock = updateStock();
-            if (!currentStock) { return false; }
-            return currentStock.reduce((acc, curr, i) => {
-                if (i >= oldStock.length || curr === 'sold') {
-                    // current slot was added by monthly card or current
-                    // slot has been bought out
-                    return acc;
+                function detectRestock() {
+                    const oldStock = Storage.labShopStock();
+                    const currentStock = updateStock();
+                    if (!currentStock) { return false; }
+                    return currentStock.reduce((acc, curr, i) => {
+                        if (i >= oldStock.length || curr === 'sold') {
+                            // current slot was added by monthly card or current
+                            // slot has been bought out
+                            return acc;
+                        }
+                        return acc || curr !== oldStock[i];
+                    }, false);
+
+                    function updateStock() {
+                        const currentStock = Array.from($('#shop_tab_container .item-container .slot')).map(parseShopItem);
+                        if (currentStock.length === 0) {
+                            log(`couldn't read inventory`);
+                            return null;
+                        }
+                        Storage.labShopStock(currentStock);
+                        return currentStock;
+
+                        function parseShopItem(item) {
+                            if (item.classList.contains('slot_empty')) {
+                                return 'sold';
+                            }
+                            if (item.classList.contains('slot_girl_shards')) {
+                                const shards = item.querySelector('.shards');
+                                const amount = shards.querySelector('p span').innerText;
+                                return `${shards.getAttribute('name')} ${amount}`;
+                            }
+                            if (item.classList.contains('slot_gems')) {
+                                return item.querySelector('span').className;
+                            }
+                            if (item.classList.contains('slot_hard_currency')) {
+                                return 'KB';
+                            }
+                            if (item.classList.contains('slot_rejuvenation_stone')) {
+                                return 'ST';
+                            }
+                            if (item.classList.contains('slot_energy_fight')) {
+                                return 'CP';
+                            }
+                            if (item.classList.contains('random_equipment')) {
+                                return 'HE';
+                            }
+                            if (item.classList.contains('slot_girl_armor')) {
+                                return 'GE';
+                            }
+                            if (item.classList.contains('slot_mc')) {
+                                return item.querySelector('.mc-reward div').innerText;
+                            }
+                            if (item.classList.contains('slot_scrolls_mythic')) {
+                                return 'SM';
+                            }
+                            if (item.classList.contains('slot_scrolls_legendary')) {
+                                return 'SL';
+                            }
+                            if (item.classList.contains('slot_scrolls_epic')) {
+                                return 'SE';
+                            }
+                            if (item.classList.contains('slot_scrolls_rare')) {
+                                return 'SR';
+                            }
+                            if (item.classList.contains('slot_scrolls_common')) {
+                                return 'SC';
+                            }
+                            if (item.classList.contains('slot_orbs')) {
+                                return item.querySelector('span').classList[1];
+                            }
+                            if (item.classList.contains('mythic')) {
+                                const itemId = item.getAttribute('id_item');
+                                if (itemId) return `${itemId}`;
+                            }
+                            log('lab shop item not parsed', item, item.className);
+                            return item.className;
+                        }
+                    }
                 }
-                return acc || curr !== oldStock[i];
-            }, false);
+            }
         }
 
-        function updateStock() {
-            const currentStock = Array.from($('#shop_tab_container .item-container .slot')).map(parseShopItem);
-            if (currentStock.length === 0) {
-                log(`couldn't read inventory`);
-                return null;
-            }
-            Storage.labShopStock(currentStock);
-            return currentStock;
-        }
+        function highlightPath() {
+            /*global labyrinth_grid*/
 
-        function parseShopItem(item) {
-            if (item.classList.contains('slot_empty')) {
-                return 'sold';
+            const floor = Object.values(labyrinth_grid.floors).find(f=>!f.is_completed);
+            if (!floor) return;
+
+            $('.upcoming-hex').removeClass('upcoming-hex');
+
+            const heroPos = getHeroPos();
+            const hexValues = getHexValues();
+
+            // replace rows and hexes with arrays to simplify iteration
+            floor.rows = Object.values(floor.rows);
+            floor.rows.forEach(r => {
+                r.hexes = Object.values(r.hexes);
+            });
+
+            for (let i = 0; i < floor.rows.length - 1; i++) {
+                const row = floor.rows[i];
+                const next = floor.rows[i + 1];
+
+                const restrict = row.hexes.length > next.hexes.length;
+                for (let j = 0; j < row.hexes.length; j++) {
+                    const hex = row.hexes[j];
+                    if (restrict) {
+                        // the next row is shorter so the edge hexes only have one choice
+                        if (hex.id === 1)
+                            hex.nextChoices = [j];
+                        else if (hex.id === row.hexes.length)
+                            hex.nextChoices = [j - 1];
+                        else
+                            hex.nextChoices = [j - 1, j];
+                    }
+                    else
+                        // the next row is longer so every hex has two choices
+                        hex.nextChoices = [j, j + 1];
+
+                    if (hex.type === 'hero')
+                        // large value to ensure the already walked path will be highlighted
+                        hex.value = 1000;
+                    else
+                        hex.value = hexValues[hex.type];
+
+                    hex.totalValue = null;
+                }
             }
-            if (item.classList.contains('slot_girl_shards')) {
-                const shards = item.querySelector('.shards');
-                const amount = shards.querySelector('p span').innerText;
-                return `${shards.getAttribute('name')} ${amount}`;
+
+            // iterate backwards from the boss to find the best path choice for each hex
+            floor.rows[floor.rows.length - 1].hexes[0].totalValue = 0;
+            for (let i = floor.rows.length - 2; i >= 0; i--) {
+                const row = floor.rows[i];
+                const nextHexes = floor.rows[i + 1].hexes;
+                for (const hex of row.hexes) {
+                    for (const choice of hex.nextChoices) {
+                        const sum = hex.value + nextHexes[choice].totalValue;
+                        if (!hex.totalValue || sum > hex.totalValue) {
+                            hex.nextStep = choice;
+                            hex.totalValue = sum;
+                        }
+                    }
+                }
             }
-            if (item.classList.contains('slot_gems')) {
-                return item.querySelector('span').className;
+
+            // highlight the best path
+            let bestHexIndex = 0;
+            for (const row of floor.rows) {
+                const hex = row.hexes[bestHexIndex];
+                $(`#row_${row.id} #hex_${hex.id} img`).addClass('optimal-path');
+                bestHexIndex = hex.nextStep;
             }
-            if (item.classList.contains('slot_hard_currency')) {
-                return 'KB';
+
+            // in case a bag or wings are collected the path might have to change
+            const observer = new MutationObserver(() => {
+                const newHeroPos = getHeroPos();
+                if (newHeroPos.toString() !== heroPos.toString()) {
+                    observer.disconnect();
+                    // update hexes in the row the hero moved to
+                    for (const hex of floor.rows[newHeroPos[0]].hexes) {
+                        if (hex.id - 1 === newHeroPos[1])
+                            hex.type = 'hero';
+                        else
+                            hex.is_skipped = true;
+                    }
+                    highlightPath();
+                }
+            });
+            observer.observe($(`.floor-container[floor_number="${floor.id}"]`).parent().get(0), {childList: true, subtree: true});
+
+            function getHexValues() {
+                switch (Storage.labPathStrategy()) {
+                    case LAB_STRATEGIES.xp:
+                        return {
+                            opponent_super_easy: 10,
+                            opponent_easy: 15,
+                            opponent_medium: 20,
+                            opponent_hard: 25,
+                            treasure: 1,
+                            shrine: 0,
+                        };
+                    case LAB_STRATEGIES.coins:
+                        return {
+                            opponent_super_easy: 1,
+                            opponent_easy: 2,
+                            opponent_medium: 3,
+                            opponent_hard: 4,
+                            treasure: 100,
+                            shrine: 0,
+                        };
+                    case LAB_STRATEGIES.resources:
+                        return {
+                            opponent_super_easy: 1,
+                            opponent_easy: 1,
+                            opponent_medium: 10,
+                            opponent_hard: 20,
+                            treasure: 5,
+                            shrine: 0,
+                        };
+                    default:
+                        throw `unknown strategy ${Storage.labPathStrategy()}`
+                }
             }
-            if (item.classList.contains('slot_rejuvenation_stone')) {
-                return 'ST';
+
+            function getHeroPos() {
+                const $heroHex = $(`.floor-container[floor_number="${floor.id}"] img.hex-type.hero:not(.completed-hex)`);
+                const rowId = $heroHex.parent().parent().attr('key');
+                const hexId = $heroHex.attr('hex_id');
+                return [rowId - 1, hexId - 1];
             }
-            if (item.classList.contains('slot_energy_fight')) {
-                return 'CP';
-            }
-            if (item.classList.contains('random_equipment')) {
-                return 'HE';
-            }
-            if (item.classList.contains('slot_girl_armor')) {
-                return 'GE';
-            }
-            if (item.classList.contains('slot_mc')) {
-                return item.querySelector('.mc-reward div').innerText;
-            }
-            if (item.classList.contains('slot_scrolls_mythic')) {
-                return 'SM';
-            }
-            if (item.classList.contains('slot_scrolls_legendary')) {
-                return 'SL';
-            }
-            if (item.classList.contains('slot_scrolls_epic')) {
-                return 'SE';
-            }
-            if (item.classList.contains('slot_scrolls_rare')) {
-                return 'SR';
-            }
-            if (item.classList.contains('slot_scrolls_common')) {
-                return 'SC';
-            }
-            if (item.classList.contains('slot_orbs')) {
-                return item.querySelector('span').classList[1];
-            }
-            if (item.classList.contains('mythic')) {
-                const itemId = item.getAttribute('id_item');
-                if (itemId) return `${itemId}`;
-            }
-            log('lab shop item not parsed', item, item.className);
-            return item.className;
         }
     }
 
     function editLabyrinthTeam() {
-        doWhenSelectorAvailable('.harem-panel-girls', async () => {
+        if (CONFIG.lab.favorites)
+            doASAP(favorites, '.harem-panel-girls');
+
+        async function favorites() {
             const favorites = new FavoriteLabGirls();
             $('.harem-panel-girls .harem-girl-container').each((i,girl) => {
                 favorites.prepareGirlElement(girl, 'id_girl');
@@ -2127,7 +2284,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             await runAndRepeatOnChange('.harem-panel-girls', async () => {
                 $(document).trigger('updateFavorites');
             });
-        });
+        }
     }
 
     async function editTeam() {
@@ -2419,7 +2576,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             seasonal:
                 { enabled: true, home: true, hideHotAssemblyBonusPath: false , hideSeasonalEventBonusPath: false },
             lab:
-                { enabled: true },
+                { enabled: true, favorites: true, shop: true, path: true },
             editTeam:
                 { enabled: false },
             pov:
@@ -2745,16 +2902,57 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             group: 'suckless',
             configSchema: {
                 baseKey: 'lab',
-                label: 'improved labyrinth',
+                label: 'improved labyrinth/WBT',
                 default: true,
+                subSettings: [
+                    { key: 'favorites', default: true,
+                        label: 'mark girls as favorites',
+                    },
+                    { key: 'shop', default: true,
+                        label: 'fix shop timer',
+                    },
+                    { key: 'path', default: true,
+                        label: `highlight optimal path to maximize
+                            <div id="labStrategySelector"></div>`,
+                    },
+                ],
             },
-            run() {
+            run(subSettings) {
                 config.lab = {
                     enabled: true,
+                    favorites: subSettings.favorites,
+                    shop: subSettings.shop,
+                    path: subSettings.path,
                 };
             },
         });
         config.lab.enabled = false;
+        doASAP(($labStrategySelector) => {
+            addStyle(`
+                #labStrategySelector {
+                    display: flex;
+                    div { display: flex }
+                    label {
+                        margin-bottom: -1px;
+                        margin-right: 5px;
+                    }
+                }
+            `);
+            const saved = Storage.labPathStrategy();
+            Object.entries(LAB_STRATEGIES).forEach(([name, num]) => {
+                const $radioBtn = $(`
+                    <div>
+                        <input type="radio" name="strategy" value="${num}" id="strategy_${name}" ${num === saved ? 'checked' : ''}>
+                        <label for="strategy_${name}">${name}</label>
+                    </div>
+                `);
+                $radioBtn.children('input').on('change', function () {
+                    if (this.checked) Storage.labPathStrategy(num);
+                });
+
+                $labStrategySelector.append($radioBtn);
+            })
+        }, '#labStrategySelector')
 
         registerModule({
             group: 'suckless',
