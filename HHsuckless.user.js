@@ -2466,7 +2466,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     function preventAutoPopup(manualButtons, check, close) {
         let manualClick = false;
         for (const button of manualButtons) {
-            doASAP(($btn)=>{
+            doASAP(($btn)=> {
                 $btn.on('click', () => { manualClick = true; })
             }, button);
         }
