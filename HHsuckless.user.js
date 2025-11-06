@@ -1981,7 +1981,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     filter: brightness(.6) grayscale(.6);
                 }
             `);
-            highlightPath();
+            doASAP(highlightPath, '.floor-container');
         }
 
         async function favorites() {
