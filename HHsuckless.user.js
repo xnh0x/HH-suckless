@@ -30,15 +30,19 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 (async function suckless() {
     'use strict';
 
-    const LAB_STRATEGIES =
-        { xp: 1, coins: 2, resources: 3 };
+    const LAB_STRATEGIES = {
+        xp:     { id: 1, iconClass: 'xp_icn' },
+        coins:  { id: 2, iconClass: 'labyrinth_coin_icn' },
+        kisses: { id: 3, iconClass: 'hudKiss_mix_icn' },
+        fists:  { id: 4, iconClass: 'hudBattlePts_mix_icn' },
+    };
 
     class Storage {
         static #default = {
             labFavorites: [],
             labShopCycleEnd: null,
             labShopStock: [],
-            labPathStrategy: LAB_STRATEGIES.xp,
+            labPathStrategy: LAB_STRATEGIES.xp.id,
             loveRaids: [],
             loveRaidsNotifications: [],
             pog: null,
@@ -2216,7 +2220,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
             function getHexValues() {
                 switch (Storage.labPathStrategy()) {
-                    case LAB_STRATEGIES.xp:
+                    case LAB_STRATEGIES.xp.id:
                         return {
                             opponent_super_easy: 10,
                             opponent_easy: 15,
@@ -2225,7 +2229,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                             treasure: 1,
                             shrine: 0,
                         };
-                    case LAB_STRATEGIES.coins:
+                    case LAB_STRATEGIES.coins.id:
                         return {
                             opponent_super_easy: 1,
                             opponent_easy: 2,
@@ -2234,13 +2238,22 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                             treasure: 100,
                             shrine: 0,
                         };
-                    case LAB_STRATEGIES.resources:
+                    case LAB_STRATEGIES.kisses.id:
                         return {
                             opponent_super_easy: 1,
                             opponent_easy: 1,
                             opponent_medium: 10,
-                            opponent_hard: 20,
-                            treasure: 5,
+                            opponent_hard: 12,
+                            treasure: 3,
+                            shrine: 0,
+                        };
+                    case LAB_STRATEGIES.fists.id:
+                        return {
+                            opponent_super_easy: 1,
+                            opponent_easy: 1,
+                            opponent_medium: 5,
+                            opponent_hard: 25,
+                            treasure: 10,
                             shrine: 0,
                         };
                     default:
@@ -2933,23 +2946,27 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     display: flex;
                     div { display: flex }
                     label {
-                        margin-bottom: -1px;
-                        margin-right: 5px;
+                        margin-bottom: -4px;
+                        margin-right: 4px;
+                        span {
+                            width: 20px;
+                            height: 20px;
+                            background-size: contain;
+                        }
                     }
                 }
             `);
             const saved = Storage.labPathStrategy();
-            Object.entries(LAB_STRATEGIES).forEach(([name, num]) => {
+            Object.entries(LAB_STRATEGIES).forEach(([name, {id, iconClass}]) => {
                 const $radioBtn = $(`
                     <div>
-                        <input type="radio" name="strategy" value="${num}" id="strategy_${name}" ${num === saved ? 'checked' : ''}>
-                        <label for="strategy_${name}">${name}</label>
+                        <input type="radio" name="strategy" value="${id}" id="strategy_${name}" ${id === saved ? 'checked' : ''}>
+                        <label for="strategy_${name}"><span class="${iconClass}"></span></label>
                     </div>
                 `);
                 $radioBtn.children('input').on('change', function () {
-                    if (this.checked) Storage.labPathStrategy(num);
+                    if (this.checked) Storage.labPathStrategy(id);
                 });
-
                 $labStrategySelector.append($radioBtn);
             })
         }, '#labStrategySelector')
