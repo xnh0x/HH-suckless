@@ -1385,19 +1385,25 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
 
         function pickBestOpponent() {
-            const chance = Array.from(document.querySelectorAll('.sim-chance')).map((el) => parseFloat(el.innerText));
-            const mojo = Array.from(document.querySelectorAll('.sim-mojo')).map((el) => parseFloat(el.innerText));
+            const chance = Array.from(document.querySelectorAll('.sim-chance'))
+                .map((el) => parseFloat(el.innerText));
+            const mojo = Array.from(document.querySelectorAll(
+                CONFIG.season.lowMojo ? '.slot_victory_points .amount' : '.sim-mojo'))
+                .map((el) => parseFloat(el.innerText));
+            const isBetter = CONFIG.season.lowMojo
+                ? (newMojo, bestMojo) => (newMojo < bestMojo)
+                : (newMojo, bestMojo) => (newMojo > bestMojo);
             let best;
             chance.forEach((c, i) => {
                 if (CONFIG.season.useThreshold) {
                     if (chance[i] >= CONFIG.season.threshold
-                        && (best === undefined || mojo[i] > mojo[best])) {
+                        && (best === undefined || isBetter(mojo[i], mojo[best]))) {
                         best = i;
                     }
                     return;
                 }
                 if (best !== undefined && c < chance[best]) return;
-                if (best === undefined || c > chance[best] || mojo[i] > mojo[best]) best = i;
+                if (best === undefined || c > chance[best] || isBetter(mojo[i], mojo[best])) best = i;
             });
             const bestOpponent = document.querySelector(`.season_arena_opponent_container.opponent-${best}`);
             if (best !== undefined && best > 0) {
@@ -2594,7 +2600,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             pantheon:
                 { enabled: true },
             season:
-                { enabled: true, useThreshold: false, threshold: 100 },
+                { enabled: true, useThreshold: false, threshold: 100, lowMojo: false },
             seasonal:
                 { enabled: true, home: true, hideHotAssemblyBonusPath: false , hideSeasonalEventBonusPath: false },
             lab:
@@ -2867,6 +2873,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     { key: 'useThreshold', default: false,
                         label: `pick opponent by mojo if chance is at least <span><input type="text" id="season-threshold-input" placeholder="" style="text-align: center; height: 1rem; width: 2rem;">%</span> and disable space bar if there are none`,
                     },
+                    { key: 'lowMojo', default: false,
+                        label: `stay away from the great wall of fuck you`,
+                    },
                 ],
             },
             run(subSettings) {
@@ -2874,6 +2883,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     enabled: true,
                     useThreshold: subSettings.useThreshold,
                     threshold: Storage.seasonChanceThreshold(),
+                    lowMojo: subSettings.lowMojo,
                 };
             },
         });
