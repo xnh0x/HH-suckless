@@ -975,7 +975,16 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
         const rainbow = 'linear-gradient(0deg, rgba(255,0,0,1) 0%, rgba(255,154,0,1) 11%, rgba(208,222,33,1) 22%, rgba(79,220,74,1) 33%, rgba(63,218,216,1) 44%, rgba(47,201,226,1) 55%, rgba(28,127,238,1) 66%, rgba(95,21,242,1) 77%, rgba(186,12,248,1) 88%, rgba(251,7,217,1) 99%)';
 
-        let css = `
+        let css = ``;
+        for (const carac of [1, 2, 3]) {
+            css += `
+                .profile_page:has(.hero_info .class_change_btn[carac="${carac}"]) {
+                    .slot.mythic[armor-item-tooltip]:not([data-d*='"class":{"identifier":"${carac}"']) .gradient_wrapper::before {
+                        background-image: ${wrongClass} !important;
+                    }
+                }`;
+        }
+        css +=`
                 .slot.mythic[armor-item-tooltip] {
                     .gradient_wrapper::before,
                     .gradient_wrapper::after,
@@ -987,7 +996,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                         height: 33%;
                         position: absolute;
                     }
-                    &:not([data-d*='"class":{"identifier":"${shared.Hero.infos.class}"']) {
+                    &:not(.profile_page .slot):not([data-d*='"class":{"identifier":"${shared.Hero.infos.class}"']) {
                         .gradient_wrapper::before,
                         &:not(:has(.gradient_wrapper))::before {
                             background-image: ${wrongClass} !important;
