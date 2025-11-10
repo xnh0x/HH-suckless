@@ -1065,7 +1065,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
 
         if (CONFIG.noWBT.enabled) {
-            $(`div.world-boss`).remove();
+            doASAP($wb => {$wb.remove()}, `div.world-boss`);
         }
 
         if (CONFIG.seasonal.enabled && CONFIG.seasonal.home) {
