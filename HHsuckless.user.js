@@ -24,7 +24,6 @@
 
 /*global GM_info, unsafeWindow*/
 
-console.log(`HH suckless: version: ${GM_info.script.version}`);
 const local_now_ts = Math.floor(Date.now() / 1000);
 
 (async function suckless() {
@@ -178,8 +177,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     const getGirlDictionary = bind(unsafeWindow.HHPlusPlus.Helpers, 'getGirlDictionary');
 
     const CONFIG = loadConfig();
-
-    debug('config:', CONFIG);
 
     class FavoriteLabGirls {
         constructor() {
