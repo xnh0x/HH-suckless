@@ -1527,7 +1527,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 }
             });
 
-            addStyle(`#mega-event-tabs .collect_notif.sl_show_chest { display: unset !important; }`);
+            addStyle(`.claim-confirmation .collect_notif.sl_show_chest { display: unset !important; }`);
         }
 
         function hotAssembly() {
@@ -1588,7 +1588,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 }
             });
 
-            addStyle(`#mega-event-tabs .collect_notif.show-chest { display: unset !important; }`);
+            addStyle(`.claim-confirmation .collect_notif.sl_show_chest { display: unset !important;}`);
 
             if (CONFIG.seasonal.hideHotAssemblyBonusPath) {
                 addStyle(`
