@@ -119,6 +119,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
     }
 
+    // delete obsolete data
+    Storage.loveRaids(null);
+    Storage.loveRaidsNotifications(null);
+
     if (isNutaku()) {
         const href = window.location.href;
         if (!href.includes('sess')) {
@@ -145,11 +149,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             design: {
                 ends_in: GT_design_ends_in,
                 event_ranking: GT_design_event_ranking,
-                girl_town_event_owned_v2: GT_design_girl_town_event_owned_v2,
-                love_raid: GT_design_love_raid,
                 market_new_stock: GT_design_market_new_stock,
-                raids_ongoing: GT_design_raids_ongoing,
-                upcoming_love_raids: GT_design_upcoming_love_raids,
             }
         },
         HHPlusPlus: {
@@ -158,7 +158,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 getCDNHost,
                 getGameKey,
                 getHref,
-                getWikiLink,
                 onAjaxResponse,
             },
             I18n: {
@@ -350,7 +349,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
          *     something would have popped up
          * - add PoV/PoG timers
          * - add ranking timer and reward chest for LR/HA
-         * - reduce love raid counters to exclude completed raids
          */
         home();
     }
@@ -458,20 +456,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
          */
         if (CONFIG.season.enabled) {
             seasonBattle();
-        }
-    }
-
-    if (window.location.pathname === '/love-raids.html') {
-        /*
-         * - reveals all mysterious girls
-         *     names, shards, images
-         * - adds wiki links to the orange names
-         * - makes go buttons link to harem if you already own the girl
-         * - add notification toggles to show a reminder on the homepage
-         *     if a specific raid is active
-         */
-        if (CONFIG.raid.enabled) {
-            doWhenSelectorAvailable('.raid-card', loveRaids);
         }
     }
 
@@ -1045,13 +1029,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function home() {
-        if (CONFIG.raid.enabled) {
-            doWhenSelectorAvailable('.raids', () => {
-                setNonCompletedRaidCounts();
-                setRaidNotification();
-            });
-        }
-
         if (CONFIG.news.enabled) {
             preventAutoPopup(['.info-container .chest-container', '.currency plus', '#mc-selector'], '#shop-payment-tabs', '#common-popups close');
             preventAutoPopup(['#news_button'], '#news_details_popup', '#common-popups close');
@@ -1067,51 +1044,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
         if (CONFIG.seasonal.enabled && CONFIG.seasonal.home) {
             addSeasonalInfo();
-        }
-
-        function setNonCompletedRaidCounts() {
-            const raids = Storage.loveRaids();
-            const { ongoing_love_raids_count, upcoming_love_raids_count } = unsafeWindow;
-            if (!raids) return;
-            let expired = 0, ongoing = 0, upcoming = 0;
-            raids.forEach((raid) => {
-                if (raid.end < server_now_ts) {
-                    expired += 1;
-                } else if (raid.all_is_owned) {
-                    // don't care
-                } else if (raid.start < server_now_ts) {
-                    ongoing += 1;
-                } else {
-                    upcoming += 1;
-                }
-            });
-            const outdated = raids.length - expired < ongoing_love_raids_count + upcoming_love_raids_count;
-            const $raidAmounts = $(`.raids .raids-amount`);
-            $raidAmounts.first().html(
-                `<span ${outdated ? 'style="color:pink"' : ''}>${ongoing}</span> ${GT_design_raids_ongoing}`);
-            $raidAmounts.last().html(
-                `<span ${outdated ? 'style="color:pink"' : ''}>${upcoming}</span> ${GT_design_upcoming_love_raids}`);
-        }
-
-        function setRaidNotification() {
-            const raids = Storage.loveRaids();
-            const raidNotifs = Storage.loveRaidsNotifications();
-            if (!raids || !raidNotifs) return;
-            const showNotif = raids.reduce((result, raid) => {
-                const ongoing = raid.start < server_now_ts && raid.end > server_now_ts;
-                if (ongoing && raidNotifs.includes(raid.id_raid) && !raid.all_is_owned) {
-                    if (raid.end > server_now_ts) {
-                        return true;
-                    }
-                }
-                return result;
-            }, false);
-
-            if (showNotif) {
-                $(`.raids`).append(`
-                    <img class="new_notif" src="${getCDNHost()}/ic_new.png" style="position: relative;" alt="!">
-                `);
-            }
         }
 
         function addPovTimer(key, rel, id, increment) {
@@ -1463,184 +1395,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 }
             });
         });
-    }
-
-    async function loveRaids() {
-        /*global love_raids*/
-
-        // save raid times for home page counts
-        Storage.loveRaids(love_raids.reduce((result, raid) => {
-                const { id_raid, all_is_owned } = raid;
-                let start, end;
-                if (raid['status'] === 'ongoing') {
-                    const { seconds_until_event_end } = raid;
-                    start = 0; // irrelevant since it is running
-                    end = server_now_ts + seconds_until_event_end;
-                } else {
-                    const { event_duration_seconds, seconds_until_event_start } = raid;
-                    start = server_now_ts + seconds_until_event_start;
-                    end = start + event_duration_seconds;
-                }
-                result.push({ all_is_owned, id_raid, start, end });
-                return result;
-            }, [])
-        );
-
-        const girls = await getGirlDictionary()
-            .then(dict => love_raids.map(raid => dict.get(raid.id_girl.toString())));
-
-        document.querySelectorAll('.raid-card').forEach((raidCard, i) => {
-            if (!girls[i]) {
-                log('HH++ is missing info, scroll through whole harem to update!');
-                return;
-            }
-            const { name, shards } = girls[i];
-            const { id_girl, girl_data: { grade_skins } } = love_raids[i];
-
-            const haremLink = getHref(`/characters/${id_girl}`);
-            const wikiLink = getWikiLink(name, id_girl, getLang());
-
-            // replace shadow poses
-            const leftImage = raidCard.querySelector('.girl-img.left');
-            leftImage.src = `${getCDNHost()}/pictures/girls/${id_girl}/ava0.png`;
-            if (grade_skins.length) {
-                if (!raidCard.classList.contains('multiple-girl')) {
-                    raidCard.classList.add('multiple-girl');
-                    raidCard.classList.remove('single-girl');
-                    $(raidCard).find('div.raid-content')
-                        .append($(`
-                        <div class="right-girl-container">
-                            <img class="girl-img right" src="" alt="Right" 
-                                 style="margin-top: ${leftImage.style.marginTop}">
-                        </div>
-                        `));
-                    $(raidCard).find('.info-box .info-container .classic-girl')
-                        .after($(`
-                        <div class="classic-girl">
-                            <div class="shards-container">
-                                <div class="progress-container">
-                                    <div class="shards_bar_wrapper">
-                                        <div class="shards">
-                                            <span class="skins_shard_icn"></span>
-                                            <p><span>?/33</span></p>
-                                        </div>
-                                        <div class="shards_bar skins-shards">
-                                            <div class="bar basic-progress-bar-fill pink" style="width: 0"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <a href="" class="redirect_button blue_button_L" disabled="">Go</a>
-                            </div>
-                            <div class="border-bottom"></div>
-                        </div>`));
-                }
-                const rightImage = raidCard.querySelector('.girl-img.right');
-                if (!rightImage.src.includes('grade_skins')) {
-                    // there is no good way to tell which skin it will be so this will always show the first
-                    rightImage.src = `${getCDNHost()}/pictures/girls/${id_girl}/grade_skins/grade_skin1.png`;
-                }
-            }
-
-            // sometimes the poses are also hidden instead of just black
-            raidCard.querySelectorAll('.girl-img').forEach((img) => {
-                if (img.style.visibility === 'hidden') {
-                    img.style.visibility = 'visible';
-                }
-            });
-
-            const objectives = raidCard.querySelectorAll('.classic-girl');
-            const girl = objectives[0];
-            const skin = objectives[1];
-
-            // fill names on mysterious girls and make all names link to the wiki
-            raidCard.querySelector('.raid-name span span').innerText = `${name} ${GT_design_love_raid}`;
-            girl.querySelector('.girl-name').innerHTML = `<a href="${wikiLink}" target="_blank">${name}</a>`;
-
-            // add go buttons if there aren't any
-            addMissingGoButton(girl);
-            addMissingGoButton(skin);
-
-            // enable go buttons of owned girls/skins
-            const goButtons = raidCard.querySelectorAll('.redirect_button');
-            if (shards === 100) {
-                girl.querySelector('.objective').innerText = GT_design_girl_town_event_owned_v2;
-                goButtons[0].removeAttribute('disabled');
-                goButtons[0].href = haremLink;
-                if (skin) {
-                    const skinProgress = parseFloat(skin.querySelector('.shards_bar .bar').style.width);
-                    if (skinProgress === 100) {
-                        goButtons[1].removeAttribute('disabled');
-                        goButtons[1].href = haremLink;
-                    }
-                }
-            }
-        });
-
-        // zoo's eye buttons are now obsolete
-        document.querySelectorAll('.raid-card .eye').forEach(e => e.remove());
-
-        addNotificationToggle();
-
-        if (CONFIG.raid.hideOwned) {
-            addStyle(`.raid-card.grey-overlay { display: none !important; }`);
-        }
-
-        function addNotificationToggle() {
-            const raidNotifs = Storage.loveRaidsNotifications();
-            $('.raid-card:not(.grey-overlay)').each(function () {
-                const id_raid = +$(this).attr('id_raid');
-                const $raidName = $(this).find('.raid-name');
-                $raidName.attr('data-notify', raidNotifs.includes(id_raid).toString())
-                const $notifyToggle = $(`<span class="notify-toggle"></span>`);
-                $raidName.append($notifyToggle);
-                $notifyToggle.on('click', (event) => {
-                    event.stopPropagation();
-                    const i = raidNotifs.indexOf(id_raid);
-                    if (i > -1) {
-                        raidNotifs.splice(i, 1);
-                        $raidName.attr('data-notify', 'false');
-                    } else {
-                        raidNotifs.push(id_raid);
-                        $raidName.attr('data-notify', 'true');
-                    }
-                    Storage.loveRaidsNotifications(raidNotifs);
-                });
-            });
-
-            addStyle(`
-                #love-raids .raid-card:not(.expanded) .raid-content .info-box {
-                    padding-top: 0;
-                    top: 4.8em;
-                }
-                
-                #love-raids .raid-card:not(.expanded).multiple-girl .raid-content .info-box .classic-girl:nth-of-type(2) .shards-container {
-                    top: 0;
-                }
-                .notify-toggle {
-                    position: relative;
-                    display: inline-block;
-                    height: 25px;
-                    width: 25px;
-                    background-image: url('${getCDNHost()}/ic_new.png');
-                    background-size: contain;
-                    background-repeat: no-repeat;
-                    background-position: center;
-                    opacity: 0.5;
-                    filter: grayscale(1);
-                }
-                .raid-name[data-notify="true"] .notify-toggle {
-                    opacity: 1;
-                    filter: grayscale(0);
-                }
-            `);
-        }
-
-        function addMissingGoButton(element) {
-            if (element && !$(element).find('.redirect_button').length) {
-                $(element).find('.shards-container')
-                    .append(`<a class="redirect_button blue_button_L" disabled>Go</a>`);
-            }
-        }
     }
 
     function seasonal() {
@@ -2588,8 +2342,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 { enabled: true },
             quest:
                 { enabled: true, highRes: true, nav: true },
-            raid:
-                { enabled: true , hideOwned: false },
             champ:
                 { enabled: false, fade: false, noRaid: false },
             villain:
@@ -2758,27 +2510,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             },
         });
         config.quest.enabled = false;
-
-        registerModule({
-            group: 'suckless',
-            configSchema: {
-                baseKey: 'raid',
-                label: 'additional raid card tweaks',
-                default: true,
-                subSettings: [
-                    { key: 'hideOwned', default: false,
-                        label: 'hide cards of completed raids',
-                    },
-                ],
-            },
-            run(subSettings) {
-                config.raid = {
-                    enabled: true,
-                    hideOwned: subSettings.hideOwned,
-                };
-            },
-        });
-        config.raid.enabled = false;
 
         registerModule({
             group: 'suckless',
