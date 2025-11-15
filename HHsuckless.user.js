@@ -1369,7 +1369,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     function skipBattle() {
         // wait for the battle result
-        onAjaxResponse(/action=do_battles_/, (response, opt) => {
+        onAjaxResponse(/action=do_battles_/, () => {
             // space key skips battle, a second press accepts the results
             let okClicked = false, claimClicked = false;
             $(document).on('keydown', (e) => {
