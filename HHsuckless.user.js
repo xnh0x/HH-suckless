@@ -2417,7 +2417,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             doASAP(($input) => {
                 $input.on('change', (e) => {
                     if (!e.target.checked) {
-                        // on the seeion error page HH++ and in particular the
+                        // on the session error page HH++ and in particular the
                         // config won't be loaded so the existence of this key
                         // in storage is used to check if this is enabled
                         Storage.session(null);
