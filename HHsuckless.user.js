@@ -2273,14 +2273,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
     }
 
-    function runOnChange(selectors, func) {
-        const observer = new MutationObserver(async () => {
-            observer.disconnect();
-            await func();
-        });
-        observer.observe(document.querySelector(selectors), {childList: true, subtree: true});
-    }
-
     function repeatOnChange(selectors, func) {
         const observer = new MutationObserver(async () => {
             observer.disconnect();
