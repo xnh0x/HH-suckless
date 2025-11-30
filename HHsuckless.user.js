@@ -44,9 +44,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             labPathStrategy: LAB_STRATEGIES.xp.id,
             loveRaids: [],
             loveRaidsNotifications: [],
-            pog: null,
             popData: null,
-            pov: null,
             seasonal: { type: undefined },
             seasonChanceThreshold: 100,
             session: null,
@@ -86,16 +84,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             return this.#handle('loveRaidsNotifications', value);
         }
 
-        static pog(value) {
-            return this.#handle('pog', value);
-        }
-
         static popData(value) {
             return this.#handle('popData', value);
-        }
-
-        static pov(value) {
-            return this.#handle('pov', value);
         }
 
         static seasonal(value) {
@@ -478,30 +468,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
          * - button to export owned girls/skins for optimal team script
          */
         waifu();
-    }
-
-    if (window.location.pathname === '/path-of-valor.html') {
-        /*
-         * - remove claim all
-         */
-        if (CONFIG.pov.enabled) {
-            PoV();
-        }
-        // save end time stamp for home page timer
-        const { time_remaining } = unsafeWindow;
-        Storage.pov(server_now_ts + (+time_remaining));
-    }
-
-    if (window.location.pathname === '/path-of-glory.html') {
-        /*
-         * - remove claim all
-         */
-        if (CONFIG.pov.enabled) {
-            PoV();
-        }
-        // save end time stamp for home page timer
-        const { time_remaining } = unsafeWindow;
-        Storage.pog(server_now_ts + (+time_remaining));
     }
 
     if (window.location.pathname === '/labyrinth-pool-select.html') {
@@ -958,10 +924,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             preventAutoPopup(['.info-container .chest-container', '.currency plus', '#mc-selector'], '#shop-payment-tabs', '#common-popups close');
             preventAutoPopup(['#news_button'], '#news_details_popup', '#common-popups close');
         }
-        if (CONFIG.pov.enabled && CONFIG.pov.home) {
-            addPovTimer('pov', 'path-of-valor', 'pov_timer', 14 * 24 * 60 * 60);
-            addPovTimer('pog', 'path-of-glory', 'pog_timer', 35 * 24 * 60 * 60);
-        }
 
         if (CONFIG.noWBT.enabled) {
             doASAP($wb => {$wb.remove()}, `div.world-boss`);
@@ -969,37 +931,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
         if (CONFIG.seasonal.enabled && CONFIG.seasonal.home) {
             addSeasonalInfo();
-        }
-
-        function addPovTimer(key, rel, id, increment) {
-            let end_ts = Storage[key]();
-            if (end_ts) {
-                while (serverNow() > end_ts) {
-                    // if a device hasn't been used in a while it might be more than one path out of date
-                    end_ts += increment;
-                }
-                Storage[key](end_ts);
-                // position: absolute; left: 6px; bottom: 14px;
-                const $potionText = $(`a[rel="${rel}"] .pov-widget .white_text`);
-                const $potionsBar = $(`a[rel="${rel}"] .pov-widget .pov-tier-bar`);
-                const $timer = $(`
-                    <span style="color: #8EC3FF;">${capitalize(GT_design_ends_in)} <span id="${id}" ></span>
-                    </span>
-                `);
-                if (JSON.parse(localStorage.getItem('HHPlusPlusConfig'))['core_homeScreenOldish']) {
-                    // HH++ legacy layout
-                    $potionText.after($timer).detach().appendTo($potionsBar)
-                        .css({position: 'absolute', right: '0px', bottom: '-5px', 'text-shadow': '1px 1px 0 #000'});
-                } else {
-                    $timer.appendTo($potionText).css({position: 'absolute', left: '6px'})
-                }
-
-                const handler = () => {
-                    $(`#${id}`).text(`${formatTime(end_ts - serverNow())}`);
-                };
-                handler();
-                return setTimeout(handler, 1000);
-            }
         }
 
         function addSeasonalInfo() {
@@ -1659,22 +1590,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
     }
 
-    function PoV() {
-        if (CONFIG.pov.hideClaimAll) {
-            const { time_remaining } = unsafeWindow;
-            runAndRepeatOnChange('.potions-paths-progress-bar-tiers', () => {
-                if (+time_remaining < 23.5 * 60 * 60) { return; } // only hide until the contest starts on the last day
-                const claimAll = $('.potions-paths-tier.unclaimed.claim-all-rewards')[0];
-                if (claimAll) {
-                    claimAll.classList.remove('claim-all-rewards');
-                    claimAll.querySelector('#claim-all').style.display = 'none';
-                }
-            });
-        }
-
-        preventAutoPopup(['button.purchase-pass'], '#pov_pog_passes_popup', '#pov_pog_passes_popup close');
-    }
-
     function labyrinthPoolSelect() {
         if (CONFIG.lab.favorites)
             doASAP(favorites, '.labyrinth-pool-select-container .girl-grid');
@@ -2126,14 +2041,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         console.log('HH suckless:', ...args);
     }
 
-    function debug(...args) {
-        console.debug('HH suckless:', ...args);
-    }
-
-    function capitalize(val) {
-        return val.charAt(0).toUpperCase() + val.slice(1);
-    }
-
     function formatTime(seconds) {
         const days = Math.floor(seconds / 60 / 60 / 24);
         const d = days + 'd';
@@ -2309,8 +2216,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 { enabled: true, favorites: true, shop: true, path: true },
             editTeam:
                 { enabled: false },
-            pov:
-                { enabled: true, home: true, hideClaimAll: false },
             noWBT:
                 { enabled: false },
         };
@@ -2685,31 +2590,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             },
         });
         config.editTeam.enabled = false;
-
-        registerModule({
-            group: 'suckless',
-            configSchema: {
-                baseKey: 'pov',
-                label: 'improved PoV/PoG',
-                default: true,
-                subSettings: [
-                    { key: 'home', default: true,
-                        label: 'add remaining time on home page',
-                    },
-                    { key: 'hideClaimAll', default: false,
-                        label: 'hide PoV/PoG claim all until the last day',
-                    },
-                ],
-            },
-            run(subSettings) {
-                config.pov = {
-                    enabled: true,
-                    home: subSettings.home,
-                    hideClaimAll: subSettings.hideClaimAll,
-                };
-            },
-        });
-        config.pov.enabled = false;
 
         registerModule({
             group: 'suckless',
