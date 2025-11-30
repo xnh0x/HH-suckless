@@ -156,7 +156,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             Helpers: {
                 doWhenSelectorAvailable,
                 getCDNHost,
-                getGameKey,
                 getHref,
                 onAjaxResponse,
             },
@@ -329,11 +328,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
      * - disable fade transition when opening the navigation menu
      */
     mainMenu();
-
-    /*
-     * add the monthly calendar to the menu
-     */
-    doWhenSelectorAvailable(`nav div[rel='content'] > div`, calendar);
 
     /*
      * - indicators for hero equipment resonance
@@ -865,75 +859,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
     }
 
-    function calendar() {
-        addCalendarCSS();
-
-        const calendarURL = `https://raw.githubusercontent.com/xnh0x/HH-suckless/refs/heads/master/calendar/${getGameKey()}.png`;
-        const $commonPopups = $('#common-popups');
-        const $menu = $(`nav div[rel='content'] > div`);
-
-        const $calendarMenuItem = $(`
-            <a><div><ic class="calendar"></ic><span>Calendar</span></div></a>
-        `);
-        $menu.prepend($calendarMenuItem);
-
-        const $calendarPopup = $(`
-            <div class="popup_wrapper">
-                <div class="popup_background clickable"></div>
-                <div id="popup_calendar" class="popup">
-                    <div class="calendar_container container-special-bg">
-                        <img src="${calendarURL}" alt="calendar">
-                    </div>
-                    <close class="closable"></close>
-                </div>
-            </div>
-        `);
-
-        $calendarMenuItem.on('click', () => {
-            HHMenu.hideMenu();
-            $commonPopups.css('display', 'block');
-            $commonPopups.append($calendarPopup);
-
-            $calendarPopup.find('close').on('click', () => {
-                $commonPopups.css('display', 'none');
-                $calendarPopup.remove();
-            });
-        });
-
-        function addCalendarCSS() {
-            addStyle(`
-                #contains_all > nav ic.calendar {
-                    background-image: url(https://raw.githubusercontent.com/xnh0x/HH-suckless/refs/heads/master/icon/calendar_month.svg);
-                }
-                #contains_all > nav a {
-                    cursor: pointer;
-                }
-                .popup_wrapper #popup_calendar {
-                    width: 1020px;
-                    height: 550px;
-                    top: 0.62rem;
-                    left: 0.62rem;
-                }
-                .popup_wrapper #popup_calendar close {
-                    width: 2.4rem;
-                    height: 2.2rem;
-                    background-image: url(/images/clubs/ic_xCross.png);
-                    opacity: 1;
-                }
-                .popup_wrapper #popup_calendar .calendar_container {
-                    width: 100%;
-                    height: 100%;
-                    box-shadow: none;
-                    border: 2px solid #ff9900;
-                    align-content: center;
-                }
-                .calendar_container img {
-                    height: 90%;
-                }
-            `);
-        }
-    }
-
     function addHeroEquipResonanceIndicators() {
         const wrongClass = 'url("/images/caracs/no_class.png")';
         const resonance1 = {
@@ -1143,6 +1068,42 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         if (CONFIG.champ.noRaid) {
             addStyle(`.love-raid-container { display: none; }`);
         }
+
+        $('a[champions_id]').each(function () {
+            const champId = $(this).attr('champions_id');
+            $(this).on('click', function (event) {
+                event.preventDefault();
+                shared.animations.loadingAnimation.start();
+                const champUrl = this.href;
+                $.ajax({
+                    url: champUrl,
+                    success: function (data) {
+                        const championData = JSON.parse(/{"champion"[\w\W]+?};/.exec(data)[0].slice(0,-1));
+                        const team = championData.team.map(girl=>girl.id_girl);
+                        const params = {
+                            class: "TeamBattle",
+                            battle_type: "champion",
+                            battles_amount: 1,
+                            defender_id: champId,
+                            attacker: {
+                                team
+                            }
+                        };
+                        shared.general.hh_ajax(params, function (data) {
+                            console.log(data)
+                            shared.animations.loadingAnimation.stop();
+                            delete data.end.rewards.redirectUrl;
+                            shared.reward_popup.Reward.handlePopup(data.end.rewards);
+                            shared.Hero.updates(data.end.rewards.heroChangesUpdate);
+                            if (data.objective_points) {
+                                data.end.rewards.objective_points = data.objective_points;
+                                shared.general.objectivePopup.show(data.end.rewards);
+                            }
+                        });
+                    }
+                });
+            });
+        });
     }
 
     function clubChampion() {
