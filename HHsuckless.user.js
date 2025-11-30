@@ -292,7 +292,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
          * - the automatic shop and news popup can fuck off forever
          *     the "busy" carrot may still show up for a moment when
          *     something would have popped up
-         * - add PoV/PoG timers
          * - add ranking timer and reward chest for LR/HA
          */
         home();
