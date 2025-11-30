@@ -42,8 +42,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             labShopCycleEnd: null,
             labShopStock: [],
             labPathStrategy: LAB_STRATEGIES.xp.id,
-            loveRaids: [],
-            loveRaidsNotifications: [],
             popData: null,
             seasonal: { type: undefined },
             seasonChanceThreshold: 100,
@@ -75,14 +73,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             return this.#handle('labPathStrategy', value);
         }
 
-        static loveRaids(value) {
-            return this.#handle('loveRaids', value);
-        }
-
-        static loveRaidsNotifications(value) {
-            return this.#handle('loveRaidsNotifications', value);
-        }
-
         static popData(value) {
             return this.#handle('popData', value);
         }
@@ -95,10 +85,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             return this.#handle('seasonChanceThreshold', value);
         }
     }
-
-    // delete obsolete data
-    Storage.loveRaids(null);
-    Storage.loveRaidsNotifications(null);
 
     if (!unsafeWindow['hhPlusPlusConfig']) {
         log(`waiting for HHPlusPlus`);
