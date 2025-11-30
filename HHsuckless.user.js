@@ -47,7 +47,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             popData: null,
             seasonal: { type: undefined },
             seasonChanceThreshold: 100,
-            session: null,
         }
 
         static #handle(key, value) {
@@ -95,35 +94,11 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         static seasonChanceThreshold(value) {
             return this.#handle('seasonChanceThreshold', value);
         }
-
-        static session(value) {
-            // HH_UNIVERSE and shared aren't defined on the session error page
-            // so the normal #handle() can't be used. the host will make it
-            // specific to the game but it can't be tied to the id like the others
-            const key = `${window.location.host}_session`;
-            switch (value) {
-                case undefined: return GM_getValue(key, this.#default[key]);
-                case null: GM_deleteValue(key); return;
-                default: GM_setValue(key, value); return;
-            }
-        }
     }
 
     // delete obsolete data
     Storage.loveRaids(null);
     Storage.loveRaidsNotifications(null);
-
-    if (isNutaku()) {
-        const href = window.location.href;
-        if (!href.includes('sess')) {
-            const sess = Storage.session();
-            if (sess) {
-                log('fixing session token, reloading page')
-                window.location.replace(`${href}${href.includes('?') ? '&' : '?'}sess=${sess}`)
-                return;
-            }
-        }
-    }
 
     if (!unsafeWindow['hhPlusPlusConfig']) {
         log(`waiting for HHPlusPlus`);
@@ -2258,31 +2233,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             },
         });
         config.reload.enabled = false;
-
-        if (isNutaku()) {
-            registerModule({
-                group: 'suckless',
-                configSchema: {
-                    baseKey: 'session',
-                    label: 'automatically fix missing session in url',
-                    default: false,
-                },
-                run() {
-                    /*global PLATFORM_SESS*/
-                    Storage.session(PLATFORM_SESS);
-                },
-            });
-            doASAP(($input) => {
-                $input.on('change', (e) => {
-                    if (!e.target.checked) {
-                        // on the session error page HH++ and in particular the
-                        // config won't be loaded so the existence of this key
-                        // in storage is used to check if this is enabled
-                        Storage.session(null);
-                    }
-                })
-            }, 'input[name="suckless_session"]');
-        }
 
         registerModule({
             group: 'suckless',
