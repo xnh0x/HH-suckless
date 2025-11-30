@@ -289,9 +289,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     if (window.location.pathname === '/home.html') {
         /*
-         * - the automatic shop and news popup can fuck off forever
-         *     the "busy" carrot may still show up for a moment when
-         *     something would have popped up
          * - add ranking timer and reward chest for LR/HA
          */
         home();
@@ -880,10 +877,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function home() {
-        if (CONFIG.news.enabled) {
-            preventAutoPopup(['.info-container .chest-container', '.currency plus', '#mc-selector'], '#shop-payment-tabs', '#common-popups close');
-            preventAutoPopup(['#news_button'], '#news_details_popup', '#common-popups close');
-        }
 
         if (CONFIG.noWBT.enabled) {
             doASAP($wb => {$wb.remove()}, `div.world-boss`);
@@ -2140,19 +2133,12 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         (unsafeWindow.suckless ??= {})[f.name] = f;
     }
 
-    function isNutaku() {
-        return window.location.host.includes('nutaku');
-    }
-
-
     function loadConfig() {
         // defaults
         let config = {
             reload:
                 { enabled: true },
             noThrottle:
-                { enabled: false },
-            news:
                 { enabled: false },
             activities:
                 { enabled: false, popBar: false, popShortcuts: false },
@@ -2233,21 +2219,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             },
         });
         config.noThrottle.enabled = false;
-
-        registerModule({
-            group: 'suckless',
-            configSchema: {
-                baseKey: 'news',
-                label: 'prevent news and shop popup',
-                default: false,
-            },
-            run() {
-                config.news = {
-                    enabled: true,
-                };
-            },
-        });
-        config.news.enabled = false;
 
         registerModule({
             group: 'suckless',
