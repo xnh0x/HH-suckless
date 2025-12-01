@@ -297,6 +297,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     if (window.location.pathname === '/champions-map.html') {
         /*
          * - hide raid cards to prevent accidental navigation
+         * - start fights frm the map
          */
         if (CONFIG.champ.enabled) {
             championsMap();
@@ -951,6 +952,70 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     function championsMap() {
         if (CONFIG.champ.noRaid) {
             addStyle(`.love-raid-container { display: none; }`);
+        }
+
+        if (CONFIG.champ.mapFight) {
+            $('a[champions_id]').each(function () {
+                const champId = $(this).attr('champions_id');
+                const timerId = `timer${champId}`;
+                const champUrl = shared.general.getDocumentHref(this.href);
+                if ($(this).find('.champion-rest-timer').length === 0) {
+                    const $timer = $(`
+                        <div class="champion-rest-timer">
+                            <div class="rest-timer timer">
+                                <span id="${timerId}">${GT.design.pantheon_perform}</span>
+                            </div>
+                        </div>
+                    `);
+                    $(this).find('.map-label-link').append($timer);
+                    let cooldown = 0;
+                    $(this).find('.map-label-link').on('click', function (event) {
+                        if (cooldown > 0) {
+                            // while on cooldown, visit the champ
+                            return;
+                        }
+                        event.preventDefault();
+                        shared.animations.loadingAnimation.start();
+                        $.ajax({
+                            url: champUrl,
+                            success: function (data) {
+                                const championData = JSON.parse(/{"champion"[\w\W]+?};/.exec(data)[0].slice(0,-1));
+                                const team = championData.team.map(girl=>girl.id_girl);
+                                const params = {
+                                    class: "TeamBattle",
+                                    battle_type: "champion",
+                                    battles_amount: 1,
+                                    defender_id: champId,
+                                    attacker: {
+                                        team
+                                    }
+                                };
+                                shared.general.hh_ajax(params, function (data) {
+                                    console.log(data)
+                                    shared.animations.loadingAnimation.stop();
+                                    delete data.end.rewards.redirectUrl;
+                                    shared.reward_popup.Reward.handlePopup(data.end.rewards);
+                                    shared.Hero.updates(data.end.rewards.heroChangesUpdate);
+                                    if (data.objective_points) {
+                                        shared.general.objectivePopup.show(data.objective_points);
+                                    }
+                                });
+                                cooldown = 900; // 15 minutes
+                                const countdownTo = serverNow() + cooldown;
+                                const i = setInterval(()=>{
+                                    cooldown = countdownTo - serverNow();
+                                    if (cooldown > 0) {
+                                        $(`#${timerId}`).text(`${formatTime(cooldown)}`);
+                                    } else {
+                                        clearInterval(i);
+                                        $(`#${timerId}`).text(GT.design.pantheon_perform);
+                                    }
+                                }, 1000);
+                            }
+                        });
+                    });
+                }
+            });
         }
     }
 
@@ -2113,7 +2178,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             quest:
                 { enabled: true, highRes: true, nav: true },
             champ:
-                { enabled: false, fade: false, noRaid: false },
+                { enabled: false, fade: false, noRaid: false, mapFight: false },
             villain:
                 { enabled: true },
             pantheon:
@@ -2252,6 +2317,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     { key: 'noRaid', default: false,
                         label: 'hide raid cards',
                     },
+                    { key: 'mapFight', default: false,
+                        label: 'location labels start fights (to visit click somewhere around it or while on cooldown)',
+                    },
                 ],
             },
             run(subSettings) {
@@ -2259,6 +2327,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     enabled: true,
                     fade: subSettings.fade,
                     noRaid: subSettings.noRaid,
+                    mapFight: subSettings.mapFight,
                 };
             },
         });
