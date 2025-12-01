@@ -952,42 +952,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         if (CONFIG.champ.noRaid) {
             addStyle(`.love-raid-container { display: none; }`);
         }
-
-        $('a[champions_id]').each(function () {
-            const champId = $(this).attr('champions_id');
-            $(this).on('click', function (event) {
-                event.preventDefault();
-                shared.animations.loadingAnimation.start();
-                const champUrl = this.href;
-                $.ajax({
-                    url: champUrl,
-                    success: function (data) {
-                        const championData = JSON.parse(/{"champion"[\w\W]+?};/.exec(data)[0].slice(0,-1));
-                        const team = championData.team.map(girl=>girl.id_girl);
-                        const params = {
-                            class: "TeamBattle",
-                            battle_type: "champion",
-                            battles_amount: 1,
-                            defender_id: champId,
-                            attacker: {
-                                team
-                            }
-                        };
-                        shared.general.hh_ajax(params, function (data) {
-                            console.log(data)
-                            shared.animations.loadingAnimation.stop();
-                            delete data.end.rewards.redirectUrl;
-                            shared.reward_popup.Reward.handlePopup(data.end.rewards);
-                            shared.Hero.updates(data.end.rewards.heroChangesUpdate);
-                            if (data.objective_points) {
-                                data.end.rewards.objective_points = data.objective_points;
-                                shared.general.objectivePopup.show(data.end.rewards);
-                            }
-                        });
-                    }
-                });
-            });
-        });
     }
 
     function clubChampion() {
