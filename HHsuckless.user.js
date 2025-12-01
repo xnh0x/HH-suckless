@@ -1960,16 +1960,16 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     function formatTime(seconds) {
         const days = Math.floor(seconds / 60 / 60 / 24);
-        const d = days + 'd';
+        const d = days + GT.time.d;
 
         const hours = Math.floor(seconds / 60 / 60) % 24;
-        const h = hours + 'h';
+        const h = hours + GT.time.h;
 
         const minutes = Math.floor(seconds / 60) % 60;
-        const m = minutes + 'm';
+        const m = minutes + GT.time.m;
 
         const secs = Math.floor(seconds) % 60;
-        const s = secs + 's';
+        const s = secs + GT.time.s;
 
         if (days > 0) {
             return `${d} ${h}`;
