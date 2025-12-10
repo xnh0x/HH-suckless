@@ -1,19 +1,10 @@
 (function() {
     class Settings {
         static init() {
-            const $selected = $('.settings-wrapper .settings-container .tabs-switcher');
-            if ($selected.length) {
-                this.#initTabSwitcher($selected);
-            } else {
-                const observer = new MutationObserver(() => {
-                    const $selected = $('.settings-wrapper .settings-container .tabs-switcher');
-                    if ($selected.length) {
-                        observer.disconnect();
-                        this.#initTabSwitcher($selected);
-                    }
-                })
-                observer.observe(document.documentElement, {childList: true, subtree: true});
-            }
+            doASAP(
+                Settings.#initTabSwitcher,
+                '.settings-wrapper .settings-container .tabs-switcher',
+            );
         }
 
         static #initTabSwitcher($tabSwitcher) {
@@ -63,10 +54,56 @@
             `;
             document.head.appendChild(sheet);
         };
+
+        static addTab(id_prefix, title, $content, version = null) {
+            doASAP(
+                ($container) => Settings.#addTab($container, id_prefix, title, $content, version),
+                '.settings-wrapper .settings-container',
+            );
+        }
+
+        static #addTab($container, id_prefix, title, $content, version) {
+            const $tabSwitcher = $container.find('.tabs-switcher');
+            $tabSwitcher.append(`<div id="${id_prefix}-tab" class="switch-tab tab-switcher-fade-out" data-tab="${id_prefix}_tab_container">${title}</div>`);
+
+            const $settingTabs = $container.find('.panels__settings-switch');
+            const $settingTab = $(`<div id="${id_prefix}_tab_container" class="switch-tab-content hh-scroll" style="display: none;"></div>`);
+            $settingTab.append($content);
+            $settingTabs.append($settingTab);
+
+            if (version) {
+                const sheet = document.createElement('style');
+                sheet.textContent = `
+                    #${id_prefix}-tab.underline-tab::after {
+                        content: 'v${version}';
+                    }
+                `;
+                document.head.appendChild(sheet);
+            }
+        }
     }
 
     if (window.location.pathname === '/settings.html') {
         Settings.init();
-        window.Settings = Settings;
+        unsafeWindow.Settings = {
+            addTab: Settings.addTab,
+        };
+    }
+
+    function doASAP(callback, selector, condition = (jQ) => jQ.length, waitMessage = null) {
+        const $selected = $(selector);
+        if (condition($selected)) {
+            callback($selected);
+        } else {
+            if (waitMessage) log(waitMessage);
+            const observer = new MutationObserver(() => {
+                const $selected = $(selector);
+                if (condition($selected)) {
+                    observer.disconnect();
+                    callback($selected);
+                }
+            })
+            observer.observe(document.documentElement, {childList: true, subtree: true});
+        }
     }
 })();
