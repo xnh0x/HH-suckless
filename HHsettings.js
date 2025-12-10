@@ -63,8 +63,11 @@
         }
 
         static #addTab($container, id_prefix, title, $content, version) {
-            const $tabSwitcher = $container.find('.tabs-switcher');
-            $tabSwitcher.append(`<div id="${id_prefix}-tab" class="switch-tab tab-switcher-fade-out" data-tab="${id_prefix}_tab_container">${title}</div>`);
+            const $tabsSwitcher = $container.find('.tabs-switcher');
+            const $switchTab = $(`<div id="${id_prefix}-tab" class="switch-tab tab-switcher-fade-out" data-tab="${id_prefix}_tab_container">${title}</div>`);
+            // prevent HH from adding listeners to this tab
+            $switchTab.get(0).addEventListener = () => {};
+            $tabsSwitcher.append($switchTab);
 
             const $settingTabs = $container.find('.panels__settings-switch');
             const $settingTab = $(`<div id="${id_prefix}_tab_container" class="switch-tab-content hh-scroll" style="display: none;"></div>`);
@@ -90,12 +93,11 @@
         };
     }
 
-    function doASAP(callback, selector, condition = (jQ) => jQ.length, waitMessage = null) {
+    function doASAP(callback, selector, condition = (jQ) => jQ.length) {
         const $selected = $(selector);
         if (condition($selected)) {
             callback($selected);
         } else {
-            if (waitMessage) log(waitMessage);
             const observer = new MutationObserver(() => {
                 const $selected = $(selector);
                 if (condition($selected)) {
