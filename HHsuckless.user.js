@@ -103,29 +103,12 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     const {
-        GT: {
-            design: {
-                ends_in: GT_design_ends_in,
-                event_ranking: GT_design_event_ranking,
-                market_new_stock: GT_design_market_new_stock,
-            }
-        },
         HHPlusPlus: {
-            Helpers: {
-                doWhenSelectorAvailable,
-                getCDNHost,
-                getHref,
-                onAjaxResponse,
-            },
-            I18n: {
-                getLang,
-            },
+            Helpers: { doWhenSelectorAvailable, getCDNHost, getHref, onAjaxResponse },
+            I18n: { getLang },
         },
         hhPlusPlusConfig,
         server_now_ts,
-        shared: {
-            HHMenu
-        }
     } = unsafeWindow;
 
     const bind = (obj, methodName) => obj[methodName].bind(obj);
@@ -912,6 +895,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
 
         function addSeasonalInfo() {
+            const { GT: { design: { ends_in: GT_design_ends_in, event_ranking: GT_design_event_ranking } } } = unsafeWindow;
+
             let seasonalData = Storage.seasonal();
             if (seasonalData.type === undefined
                 || !seasonalData.seasonalEnd
@@ -1652,6 +1637,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
 
         async function shop() {
+            const { GT: { design: { market_new_stock: GT_design_market_new_stock } } } = unsafeWindow;
+
             const currentShopCycleEnd = updateCycleEnd();
 
             await runAndRepeatOnChange('#shop_tab_container', setShopTimer);
