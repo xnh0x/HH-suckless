@@ -1,97 +1,9 @@
 (function() {
-    class Settings {
-        static init() {
-            doASAP(
-                Settings.#initTabSwitcher,
-                '.settings-wrapper .settings-container .tabs-switcher',
-            );
-        }
+    // not needed outside of settings
+    if (window.location.pathname !== '/settings.html') return;
 
-        static #initTabSwitcher($tabSwitcher) {
-            if ($tabSwitcher.attr('init') === 'true') return;
-            $tabSwitcher.attr('init', 'true');
-
-            $tabSwitcher.find('.slider').remove();
-
-            $tabSwitcher.on('click', (e) => {
-                if (e.target === e.currentTarget) return;
-
-                $tabSwitcher.find('.underline-tab').each(function () {
-                    $(this).removeClass('underline-tab');
-                    $(this).removeClass('tab-switcher-fade-in');
-                    $(this).addClass('tab-switcher-fade-out');
-                });
-                $('.switch-tab-content').css('display', 'none');
-
-                const $target = $(e.target);
-                $target.removeClass('tab-switcher-fade-out');
-                $target.addClass('tab-switcher-fade-in');
-                $target.addClass('underline-tab');
-                $(`#${$target.attr('data-tab')}`).css('display', 'flex');
-            });
-
-            $tabSwitcher.addClass('hh-scroll');
-
-            const sheet = document.createElement('style');
-            sheet.textContent = `
-                .tabs-switcher {
-                    column-gap: 10px;
-                    width: 94%;
-                    margin-left: 3%;
-                }
-                .tabs-switcher .switch-tab {
-                    flex-shrink: 0;
-                    margin-left: unset;
-                }
-                .underline-tab::after {
-                    display: block;
-                    position: absolute;
-                    top: -15px;
-                    right: -15px;
-                    font-size: 10px;
-                    color: #a1624a;
-                }
-            `;
-            document.head.appendChild(sheet);
-        };
-
-        static addTab(id_prefix, title, $content, version = null) {
-            doASAP(
-                ($container) => Settings.#addTab($container, id_prefix, title, $content, version),
-                '.settings-wrapper .settings-container',
-            );
-        }
-
-        static #addTab($container, id_prefix, title, $content, version) {
-            const $tabsSwitcher = $container.find('.tabs-switcher');
-            const $switchTab = $(`<div id="${id_prefix}-tab" class="switch-tab tab-switcher-fade-out" data-tab="${id_prefix}_tab_container">${title}</div>`);
-            // prevent HH from adding listeners to this tab
-            $switchTab.get(0).addEventListener = () => {};
-            $tabsSwitcher.append($switchTab);
-
-            const $settingTabs = $container.find('.panels__settings-switch');
-            const $settingTab = $(`<div id="${id_prefix}_tab_container" class="switch-tab-content hh-scroll" style="display: none;"></div>`);
-            $settingTab.append($content);
-            $settingTabs.append($settingTab);
-
-            if (version) {
-                const sheet = document.createElement('style');
-                sheet.textContent = `
-                    #${id_prefix}-tab.underline-tab::after {
-                        content: 'v${version}';
-                    }
-                `;
-                document.head.appendChild(sheet);
-            }
-        }
-    }
-
-    if (window.location.pathname === '/settings.html') {
-        Settings.init();
-        unsafeWindow.Settings = {
-            addTab: Settings.addTab,
-        };
-    }
+    // already initialized
+    if (unsafeWindow.HHSettings) return;
 
     function doASAP(callback, selector, condition = (jQ) => jQ.length) {
         const $selected = $(selector);
@@ -107,5 +19,134 @@
             })
             observer.observe(document.documentElement, {childList: true, subtree: true});
         }
+    }
+
+    function addStyle(css) {
+        const sheet = document.createElement('style');
+        sheet.textContent = css;
+        document.head.appendChild(sheet);
+    }
+
+    function createRandomID()
+    {
+        return Math.random().toString(36).replace('0.','');
+    }
+
+    function initTabSwitcher($tabSwitcher) {
+        if ($tabSwitcher.attr('init') === 'true') return;
+        $tabSwitcher.attr('init', 'true');
+
+        $tabSwitcher.find('.slider').remove();
+
+        $tabSwitcher.on('click', (e) => {
+            if (e.target === e.currentTarget) return;
+
+            $tabSwitcher.find('.underline-tab').each(function () {
+                $(this).removeClass('underline-tab');
+                $(this).removeClass('tab-switcher-fade-in');
+                $(this).addClass('tab-switcher-fade-out');
+            });
+            $('.switch-tab-content').css('display', 'none');
+
+            const $target = $(e.target);
+            $target.removeClass('tab-switcher-fade-out');
+            $target.addClass('tab-switcher-fade-in');
+            $target.addClass('underline-tab');
+            $(`#${$target.attr('data-tab')}`).css('display', 'flex');
+        });
+
+        $tabSwitcher.addClass('hh-scroll');
+
+        addStyle(`
+            .tabs-switcher {
+                column-gap: 10px;
+                width: 94%;
+                margin-left: 3%;
+            }
+            .tabs-switcher .switch-tab {
+                flex-shrink: 0;
+                margin-left: unset;
+            }
+            .underline-tab::after {
+                display: block;
+                position: absolute;
+                top: -15px;
+                right: -15px;
+                font-size: 10px;
+                color: #a1624a;
+            }
+        `);
+    }
+
+    class SettingsTab {
+        constructor(title, version = null) {
+            const randomID = createRandomID();
+            this.tabId = `HH-settings-${randomID}-tab`;
+            this.contentId = `HH-settings-${randomID}-content`;
+
+            this.$switchTab = $(`<div id="${this.tabId}" class="switch-tab tab-switcher-fade-out" data-tab="${this.contentId}">${title}</div>`);
+            // prevent HH from adding listeners to this tab
+            this.$switchTab.get(0).addEventListener = () => {};
+            this.$switchTabContent = $(`<div id="${this.contentId}" class="switch-tab-content hh-scroll hh-settings" style="display: none;"></div>`);
+
+            this.#addTab(this.$switchTab, this.$switchTabContent);
+
+            this.#addVersion(version);
+        }
+
+        #addVersion(version) {
+            if (version === null) return;
+
+            addStyle(`
+                #${this.tabId}.underline-tab::after {
+                    content: 'v${version}';
+                }
+            `);
+        }
+
+        #addTab($switchTab, $switchTabContent) {
+            doASAP(
+                ($container) => {
+                    const $tabsSwitcher = $container.find('.tabs-switcher');
+                    $tabsSwitcher.append($switchTab);
+                    const $settingTabs = $container.find('.panels__settings-switch');
+                    $settingTabs.append($switchTabContent);
+                },
+                '.settings-wrapper .settings-container',
+            );
+        }
+
+        addOption($option) {
+            this.$switchTabContent.append($option);
+        }
+    }
+
+    function createSettingsTab(title, version = null){
+        return new SettingsTab(title, version);
+    }
+
+    function exposeFunction(f) {
+        (unsafeWindow.HHSettings ??= {})[f.name] ??= f;
+    }
+
+    function init() {
+        doASAP(
+            initTabSwitcher,
+            '.settings-wrapper .settings-container .tabs-switcher',
+        );
+        exposeFunction(createSettingsTab);
+        $(document).trigger('HHSettings:init');
+    }
+
+    // check for jQuery
+    if (unsafeWindow.$) {
+        init();
+    } else {
+        const observer = new MutationObserver(() => {
+            if (!unsafeWindow.$) return;
+            observer.disconnect();
+            init();
+        })
+        observer.observe(document.documentElement, {childList: true, subtree: true});
     }
 })();
