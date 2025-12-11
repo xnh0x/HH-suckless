@@ -46,7 +46,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             popData: null,
             seasonal: { type: undefined },
             seasonChanceThreshold: 100,
-            settingsBacklink: null,
         }
 
         static #handle(key, value) {
@@ -85,12 +84,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
         static seasonChanceThreshold(value) {
             return this.#handle('seasonChanceThreshold', value);
-        }
-
-        static settingsBacklink(value) {
-            // prevent the backlink from looping back to itself
-            if (value && value.includes('settings.html')) return;
-            return this.#handle('settingsBacklink', value);
         }
     }
 
@@ -778,9 +771,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     function mainMenu() {
         doWhenSelectorAvailable('#contains_all > nav > [rel="content"] > div', () => {
             $('#contains_all > nav > [rel="content"] > div')[0].style.transition = 'none';
-            doASAP(($settingsItem)=>{
-                $settingsItem.on('click', ()=>{ Storage.settingsBacklink(window.location.href); })
-            }, '#contains_all > nav a:has(ic.panel)');
         });
     }
 
@@ -880,8 +870,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     function settings() {
         doASAP(($close) => {
-            const settingsBacklink = Storage.settingsBacklink();
-            if (settingsBacklink) $close.attr('href', settingsBacklink);
+            $close.attr('href', null);
+            $close.css('cursor', 'pointer');
+            $close.on('click', ()=>{window.history.back()});
         }, '.settings-container a.close_cross');
 
         // for testing purposes
