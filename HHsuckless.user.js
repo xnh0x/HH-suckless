@@ -2639,7 +2639,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     );
                 }
 
-                if (window.location.pathname === '/penta-drill.html' && !season_has_pass) {
+                if (window.location.pathname === '/penta-drill.html' && !penta_drill_data.pass_reminder.penta_drill_pass[0].has_pass) {
                     addStyle(`
                         #penta_pass_overlay { display: none !important; }
                         #get_penta_pass_btn { display: none !important; }
