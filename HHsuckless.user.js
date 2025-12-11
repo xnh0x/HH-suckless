@@ -1034,7 +1034,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             $(this).after($performSkip);
 
             const preBattleHref = $(this).attr('href');
-            const opponentId = URL.parse(window.location.origin + preBattleHref).searchParams.get('id_opponent');
+            const opponentId = new URLSearchParams(preBattleHref).get('id_opponent');
 
             $performSkip.one('click', () => {
                 const $allButtons = $('.green_button_L');
