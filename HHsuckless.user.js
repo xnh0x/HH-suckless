@@ -20,6 +20,7 @@
 // @grant        GM_getValue
 // @grant        GM_deleteValue
 // @grant        unsafeWindow
+// @require      https://raw.githubusercontent.com/xnh0x/HH-suckless/refs/heads/master/HHsettings.js
 // ==/UserScript==
 
 /*global GM_info, unsafeWindow*/
@@ -882,6 +883,15 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             const settingsBacklink = Storage.settingsBacklink();
             if (settingsBacklink) $close.attr('href', settingsBacklink);
         }, '.settings-container a.close_cross');
+
+        // for testing purposes
+        addSettingsTab();
+
+        function addSettingsTab() {
+            const { HHSettings: { createSettingsTab } } = unsafeWindow;
+            const settingsTab = createSettingsTab('suckless', GM_info.script.version);
+            settingsTab.addOption($(`<div>test</div>`));
+        }
     }
 
     function home() {
