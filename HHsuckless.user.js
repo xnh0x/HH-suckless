@@ -298,7 +298,11 @@ const local_now_ts = Math.floor(Date.now() / 1000);
          * - add perform & skip
          */
         if (CONFIG.drill.enabled) {
-            doASAP(pentaDrillArena, `.opponent-info-container`);
+            doASAP(
+                pentaDrillArena,
+                '.opponents-container.grid-container .opponent-info-container',
+                (jQ) => jQ.length === 4
+            );
         }
     }
 
