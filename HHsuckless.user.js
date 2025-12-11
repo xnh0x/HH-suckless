@@ -256,7 +256,15 @@ const local_now_ts = Math.floor(Date.now() / 1000);
      * - replace HH++ PoP bar
      */
     if (CONFIG.activities.popBar) {
-        doWhenSelectorAvailable('a.script-pop-timer', popTimerBar);
+        if (window.location.pathname === '/penta-drill-arena.html') {
+            doWhenSelectorAvailable(
+                '.opponents-container.grid-container .opponent-info-container',
+                () => { doWhenSelectorAvailable('a.script-pop-timer', popTimerBar) },
+                (jQ) => jQ.length === 4
+            );
+        } else {
+            doWhenSelectorAvailable('a.script-pop-timer', popTimerBar);
+        }
     }
 
     /*
