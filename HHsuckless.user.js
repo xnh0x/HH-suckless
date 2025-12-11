@@ -2631,14 +2631,21 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 this.hasRun = true;
 
                 /*global season_has_pass*/
-                if (!season_has_pass) {
-                    // season - hide path and adjust tier labels
+                if (window.location.pathname === '/season.html' && !season_has_pass) {
                     addStyle(`
                         #gsp_btn_holder { display: none !important; }
                         .pass_reward.reward_wrapper { display: none !important; }
                         .rewards_seasons_row .rewards_pair .tier_number { top: 100% !important; }`
                     );
+                }
 
+                if (window.location.pathname === '/penta-drill.html' && !season_has_pass) {
+                    addStyle(`
+                        #penta_pass_overlay { display: none !important; }
+                        #get_penta_pass_btn { display: none !important; }
+                        .pass_reward.reward_wrapper { display: none !important; }
+                        .rewards_penta_drill_row .rewards_pair .tier_number { top: 100% !important; }
+                    `);
                 }
 
                 // ME - hide shop button and bundles
