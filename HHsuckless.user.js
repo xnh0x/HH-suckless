@@ -2639,15 +2639,6 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     );
                 }
 
-                if (window.location.pathname === '/penta-drill.html' && !penta_drill_data.pass_reminder.penta_drill_pass[0].has_pass) {
-                    addStyle(`
-                        #penta_pass_overlay { display: none !important; }
-                        #get_penta_pass_btn { display: none !important; }
-                        .pass_reward.reward_wrapper { display: none !important; }
-                        .rewards_penta_drill_row .rewards_pair .tier_number { top: 100% !important; }
-                    `);
-                }
-
                 // ME - hide shop button and bundles
                 addStyle(`
                     #get_mega_pass_shop_btn { display: none !important; }
