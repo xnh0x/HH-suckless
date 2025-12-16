@@ -295,6 +295,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     if (window.location.pathname === '/penta-drill-arena.html') {
         /*
+         * - sort by power
          */
         if (CONFIG.drill.enabled) {
             doASAP(
@@ -989,6 +990,16 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function pentaDrillArena() {
+        const opponentContainer = $('.opponents-container.grid-container');
+        opponentContainer.find('.opponent-info-container')
+            .get()
+            .map((e, i) => {
+                return { 'power': opponents_list[i].player.total_power, 'opponent': e }
+            })
+            .sort((a, b) => a.power - b.power)
+            .forEach((e)=>{
+                opponentContainer.append(e.opponent);
+            });
     }
 
     function pentaDrillPreBattle() {
@@ -2369,19 +2380,19 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
         config.pantheon.enabled = false;
 
-        // registerModule({
-        //     group: 'suckless',
-        //     configSchema: {
-        //         baseKey: 'drill',
-        //         label: 'improved penta drill fights',
-        //         default: true,
-        //     },
-        //     run() {
-        //         config.drill = {
-        //             enabled: true,
-        //         };
-        //     },
-        // });
+        registerModule({
+            group: 'suckless',
+            configSchema: {
+                baseKey: 'drill',
+                label: 'improved penta drill fights',
+                default: true,
+            },
+            run() {
+                config.drill = {
+                    enabled: true,
+                };
+            },
+        });
         config.drill.enabled = false;
 
         registerModule({
