@@ -296,6 +296,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     if (window.location.pathname === '/penta-drill-arena.html') {
         /*
          * - sort by power
+         * - space key starts battle against first opponent
          */
         if (CONFIG.drill.enabled) {
             doASAP(
@@ -1000,6 +1001,25 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             .forEach((e)=>{
                 opponentContainer.append(e.opponent);
             });
+
+        // space key starts battle against first opponent
+        if (shared.Hero.energies.drill.amount) {
+            let fightStarted = false;
+            $(document).on('keydown', (e) => {
+                if (e.key === ' ') {
+                    if (!fightStarted) {
+                        clickOnElement($('#perform_opponent').get(0));
+                        fightStarted = true;
+                        return;
+                    }
+                    const $okButton = $('#rewards_popup button.blue_button_L');
+                    if ($okButton.length) {
+                        clickOnElement($okButton.get(0));
+                        $(document).off('keydown');
+                    }
+                }
+            });
+        }
     }
 
     function pentaDrillPreBattle() {
