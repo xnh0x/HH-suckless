@@ -286,6 +286,41 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         settings();
     }
 
+    if (window.location.pathname === '/girl-equipment-upgrade.html') {
+        /*
+         * - get girl equip counts
+         */
+        function getEquipCount() {
+            const counts = Array.from({ length: 6 }, () => ({
+                figure: new Array(12).fill(0),
+                element: Object.fromEntries(
+                    ["darkness", "fire", "nature", "stone", "sun", "water", "light", "psychic"]
+                        .map(element => [element, 0])),
+            }));
+            $('.inventory-container .items-container .item-container .slot.mythic').each(function() {
+                const {
+                    level,
+                    resonance_bonuses: {
+                        element: { identifier: element },
+                        figure: { identifier: figure },
+                    },
+                    slot_index,
+                } = $(this).data('d');
+
+                if (level < 10) {
+                    counts[slot_index-1].element[element] += 1;
+                    counts[slot_index-1].figure[figure-1] += 1;
+                }
+            });
+            let tsv = '';
+            counts.forEach(value => {
+                tsv += value.figure.join('\t') + '\t\t\t\t' + Object.values(value.element).join('\t') + '\n';
+            });
+            copyText(tsv);
+        }
+        exposeFunction(getEquipCount);
+    }
+
     if (window.location.pathname === '/home.html') {
         /*
          * - add ranking timer and reward chest for LR/HA
