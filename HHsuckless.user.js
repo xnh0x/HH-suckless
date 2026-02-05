@@ -2633,9 +2633,14 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     #bundles_tab { display: none !important; }`
                 );
 
-                // ?
+                // PoV/PoG paid path
                 addStyle(`
                     .purchase-shop { display: none !important; }`
+                );
+
+                // adventure skip
+                addStyle(`
+                    #worldmap .unlock-quest-container { display: none !important; }`
                 );
             },
         });
