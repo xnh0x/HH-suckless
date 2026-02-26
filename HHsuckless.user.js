@@ -1749,6 +1749,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                             }
                             if (item.classList.contains('slot_girl_shards')) {
                                 const shards = item.querySelector('.shards');
+                                // if the last shards for the girl were acquired somewhere else there will be no shards
+                                // displayed. this can be treated as if the shards were bought
+                                if (shards === null) return 'sold';
                                 const amount = shards.querySelector('p span').innerText;
                                 return `${shards.getAttribute('name')} ${amount}`;
                             }
