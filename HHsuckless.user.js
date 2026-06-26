@@ -1084,7 +1084,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     function activities() {
         const { pop_data } = unsafeWindow;
         if (CONFIG.activities.popShortcuts) {
-            if (window.location.search.includes('&index')) {
+            log(window.location.search.includes('&pop_id'))
+            if (window.location.search.includes('&pop_id')) {
                 popAssign();
             } else {
                 popCollect();
@@ -1134,13 +1135,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     return;
                 }
                 if (e.key === ' ') {
-                    if (Object.values(pop_data).reduce((inactive, pop)=>{ return inactive + (pop.time_to_finish === 0) }, 0) === 0) {
-                        // nothing else to assign, go home
-                        clickOnElement($(`header > a.hh_logo img`).get(0));
-                        $(document).off('keydown');
-                        return;
-                    }
-                    const $assignButton = $('.pop-quick-nav button[rel=pop_auto_assign]');
+                    const $assignButton = $('button[rel=pop_auto_assign]');
                     if (!$assignButton.attr('disabled')) {
                         clickOnElement($assignButton.get(0));
                         $assignButton.attr('disabled', '');
@@ -1153,7 +1148,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                         return;
                     }
                     if ($('.pop_central_part button[rel=pop_finish]').css('display') !== 'none') {
-                        clickOnElement($('.pop-quick-nav a .pop-quick-nav-next').get(0));
+                        clickOnElement($('.pop_right_part a.back_button .mapArrowBack_flat_icn').get(0));
                         $(document).off('keydown');
                     }
                 }
