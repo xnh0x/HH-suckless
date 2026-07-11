@@ -504,9 +504,20 @@ const local_now_ts = Math.floor(Date.now() / 1000);
          *     tries to show when the next restock happens. it will be a little
          *     inaccurate if last restock was triggered on a different device,
          *     but it will show when the next restock happens at the latest
+         * - highlight optimal path
+         * - 'space' key shortcuts
          */
         if (CONFIG.lab.enabled) {
             labyrinth();
+        }
+    }
+
+    if (window.location.pathname === '/labyrinth-pre-battle.html') {
+        /*
+         * - 'space' key starts perform & skip (lab++ required)
+         */
+        if (CONFIG.lab.enabled) {
+            labyrinthPreBattle();
         }
     }
 
@@ -1198,6 +1209,27 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         });
     }
 
+    function labyrinthPreBattle() {
+        if (CONFIG.lab.labSpace) {
+            // space key starts single battle
+            $(document).on('keydown', (e) => {
+                if (e.key === ' ') {
+                    const $ok = $('#rewards_popup button.blue_button_L[confirm_blue_button]');
+                    if ($ok.length) {
+                        clickOnElement($ok.get(0));
+                        return;
+                    }
+                    const $confirm = $('button#perform_opponent');
+                    if ($confirm.length === 2) {
+                        // perform & skip is the second button
+                        clickOnElement($confirm.get(1));
+                        return;
+                    }
+                }
+            });
+        }
+    }
+
     function pantheonBattle() {
         skipBattle();
     }
@@ -1868,8 +1900,46 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             let bestHexIndex = 0;
             for (const row of floor.rows) {
                 const hex = row.hexes[bestHexIndex];
-                $(`#row_${row.id} #hex_${hex.id} img`).addClass('optimal-path');
+                $(`#row_${row.id} #hex_${hex.id} img:not([rel="labyrinth_hex_enter"])`).addClass('optimal-path');
+                $(`#row_${row.id} #hex_${hex.id} img[rel="labyrinth_hex_enter"][hex_id=${hex.nextStep + 1}]`).addClass('optimal-path');
                 bestHexIndex = hex.nextStep;
+            }
+
+            if (CONFIG.lab.labSpace) {
+                $(document).off("keydown.lab_space").on('keydown.lab_space', (e) => {
+                    if (e.key === ' ') {
+                        const $confirm = $('#confirmation_popup button#popup_confirm');
+                        if ($confirm.length) {
+                            clickOnElement($confirm.get(0));
+                            return;
+                        }
+                        const $ok = $('#rewards_popup button.blue_button_L[confirm_blue_button]');
+                        if ($ok.length) {
+                            clickOnElement($ok.get(0));
+                            return;
+                        }
+                        const $relicOk = $('#labyrinth_reward_popup button#close-relic-popup.blue_button_L');
+                        if ($relicOk.length) {
+                            clickOnElement($relicOk.get(0));
+                            return;
+                        }
+                        const $sweepOk = $('#labyrinth_reward_popup button#confirm-sweep-rewards.blue_button_L');
+                        if ($sweepOk.length) {
+                            clickOnElement($sweepOk.get(0));
+                            return;
+                        }
+                        const $relicClaim = $('#labyrinth_reward_popup button.claim-relic-btn.blue_button_L');
+                        if ($relicClaim.length) {
+                            clickOnElement($relicClaim.get(0));
+                            return;
+                        }
+                        const $arrow = $('img[rel="labyrinth_hex_enter"].optimal-path');
+                        if ($arrow.length) {
+                            clickOnElement($arrow.get(0));
+                            return;
+                        }
+                    }
+                });
             }
 
             // in case a bag or wings are collected the path might have to change
@@ -2237,7 +2307,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             seasonal:
                 { enabled: true, home: true, hideHotAssemblyBonusPath: false , hideSeasonalEventBonusPath: false },
             lab:
-                { enabled: true, favorites: true, shop: true, path: true },
+                { enabled: true, favorites: true, shop: true, path: true, labSpace: true },
             editTeam:
                 { enabled: false },
             noWBT:
@@ -2532,6 +2602,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                         label: `highlight optimal path to maximize
                             <div id="labStrategySelector"></div>`,
                     },
+                    { key: 'labSpace', default: true,
+                        label: `lab space`,
+                    },
                 ],
             },
             run(subSettings) {
@@ -2540,6 +2613,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                     favorites: subSettings.favorites,
                     shop: subSettings.shop,
                     path: subSettings.path,
+                    labSpace: subSettings.labSpace,
                 };
             },
         });
