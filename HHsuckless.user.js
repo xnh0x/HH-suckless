@@ -39,6 +39,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     class Storage {
         static #default = {
+            labCycleEnd: 0,
+            labDone: false,
             labFavorites: [],
             labShopCycleEnd: null,
             labShopStock: [],
@@ -56,6 +58,14 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 case null: GM_deleteValue(fullKey); return;
                 default: GM_setValue(fullKey, value); return;
             }
+        }
+
+        static labCycleEnd(value) {
+            return this.#handle('labCycleEnd', value);
+        }
+
+        static labDone(value) {
+            return this.#handle('labDone', value);
         }
 
         static labFavorites(value) {
@@ -324,6 +334,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     if (window.location.pathname === '/home.html') {
         /*
          * - add ranking timer and reward chest for LR/HA
+         * - add indicator for lab:
+         *     completed -> blue
+         *     two days left -> green
+         *     one day left -> orange
          */
         home();
     }
@@ -970,6 +984,31 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
         if (CONFIG.seasonal.enabled && CONFIG.seasonal.home) {
             addSeasonalInfo();
+        }
+
+        if (CONFIG.lab.enabled) {
+            const labCycleEnd = Storage.labCycleEnd();
+            if (labCycleEnd < server_now_ts) {
+                Storage.labDone(false);
+                Storage.labCycleEnd(labCycleEnd + 2 * 24 * 60 * 60);
+            }
+            if (!Storage.labDone()) {
+                if (labCycleEnd - server_now_ts > 24 * 60 * 60) {
+                    addStyle(`
+                        a.round_blue_button.script-home-shortcut.script-home-shortcut-labyrinth {
+                            background: transparent linear-gradient(180deg, #3DB236 0%, #96C120 100%);
+                            box-shadow: inset 0px 3px 0px #d6f195, 0px 3px 1px #00000075;
+                        }
+                    `);
+                } else {
+                    addStyle(`
+                        a.round_blue_button.script-home-shortcut.script-home-shortcut-labyrinth {
+                            background-image: linear-gradient(to top, #ff9900 0%, #ff7700 100%);
+                            box-shadow: 0 3px 0 rgba(13, 22, 25, 0.35), inset 0 3px 0 #ffde00, 0 0 20px rgba(255, 142, 0, 0.45);
+                        }
+                    `);
+                }
+            }
         }
 
         function addSeasonalInfo() {
@@ -1671,6 +1710,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
     }
 
     function labyrinth() {
+        /*global cycle_end_in_seconds,labyrinth_grid*/
+        Storage.labCycleEnd(server_now_ts + cycle_end_in_seconds);
+        Storage.labDone(Object.values(labyrinth_grid.floors).reduce((acc, cur) => acc && cur.is_completed, true));
+
         if (CONFIG.lab.favorites)
             doASAP(favorites, '#squad_tab_container .squad-container .girl-grid');
 
