@@ -987,10 +987,11 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
 
         if (CONFIG.lab.enabled) {
-            const labCycleEnd = Storage.labCycleEnd();
+            let labCycleEnd = Storage.labCycleEnd();
             if (labCycleEnd < server_now_ts) {
+                labCycleEnd += 2 * 24 * 60 * 60;
                 Storage.labDone(false);
-                Storage.labCycleEnd(labCycleEnd + 2 * 24 * 60 * 60);
+                Storage.labCycleEnd(labCycleEnd);
             }
             if (!Storage.labDone()) {
                 if (labCycleEnd - server_now_ts > 24 * 60 * 60) {
