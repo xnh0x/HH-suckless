@@ -1254,15 +1254,15 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             // space key starts single battle
             $(document).on('keydown', (e) => {
                 if (e.key === ' ') {
-                    const $ok = $('#rewards_popup button.blue_button_L[confirm_blue_button]');
+                    const $ok = $('#rewards_popup button.blue_button_L');
                     if ($ok.length) {
                         clickOnElement($ok.get(0));
                         return;
                     }
-                    const $confirm = $('button#perform_opponent');
-                    if ($confirm.length === 2) {
+                    const $perform = $('button#perform_opponent');
+                    if ($perform.length === 2) {
                         // perform & skip is the second button
-                        clickOnElement($confirm.get(1));
+                        clickOnElement($perform.get(1));
                         return;
                     }
                 }
