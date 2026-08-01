@@ -1209,13 +1209,16 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
     function trollPreBattle() {
         // space key starts single battle
-        if (!shared.Hero.energies.fight.amount) { return; }
         $(document).on('keydown', (e) => {
+            if (!shared.Hero.energies.fight.amount) { return; }
             if (e.key === ' ') {
                 $(document).off('keydown');
-                doWhenSelectorAvailable(`.battle-buttons .single-battle-button`, () => {
-                    clickOnElement($(`.battle-buttons .single-battle-button`).get(0));
-                });
+                doASAP(
+                    ($perform) => {
+                        setTimeout(() => { clickOnElement($perform.get(0)); }, 500);
+                    },
+                    `.battle-buttons .single-battle-button`
+                );
             }
         });
     }
