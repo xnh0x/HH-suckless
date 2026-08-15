@@ -42,6 +42,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
             labCycleEnd: 0,
             labDone: false,
             labFavorites: [],
+            labRelicToPick: false,
             labShopCycleEnd: null,
             labShopStock: [],
             labPathStrategy: LAB_STRATEGIES.xp.id,
@@ -74,6 +75,10 @@ const local_now_ts = Math.floor(Date.now() / 1000);
 
         static labShopCycleEnd(value) {
             return this.#handle('labShopCycleEnd', value);
+        }
+
+        static labRelicToPick(value) {
+            return this.#handle('labRelicToPick', value);
         }
 
         static labShopStock(value) {
@@ -992,6 +997,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 labCycleEnd += 2 * 24 * 60 * 60;
                 Storage.labDone(false);
                 Storage.labCycleEnd(labCycleEnd);
+                Storage.labRelicToPick(false);
             }
             if (!Storage.labDone()) {
                 if (labCycleEnd - server_now_ts > 24 * 60 * 60) {
@@ -1259,6 +1265,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 if (e.key === ' ') {
                     const $ok = $('#rewards_popup button.blue_button_L');
                     if ($ok.length) {
+                        if ($ok.is(`[confirm_blue_button]`)) {
+                            Storage.labRelicToPick(true);
+                        }
                         clickOnElement($ok.get(0));
                         return;
                     }
@@ -1717,6 +1726,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         /*global cycle_end_in_seconds,labyrinth_grid*/
         Storage.labCycleEnd(server_now_ts + cycle_end_in_seconds);
         Storage.labDone(Object.values(labyrinth_grid.floors).reduce((acc, cur) => acc && cur.is_completed, true));
+        if (Storage.labDone()) Storage.labRelicToPick(false);
 
         if (CONFIG.lab.favorites)
             doASAP(favorites, '#squad_tab_container .squad-container .girl-grid');
@@ -1967,6 +1977,7 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                         }
                         const $relicOk = $('#labyrinth_reward_popup button#close-relic-popup.blue_button_L');
                         if ($relicOk.length) {
+                            Storage.labRelicToPick(false);
                             clickOnElement($relicOk.get(0));
                             return;
                         }
@@ -1980,6 +1991,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                             clickOnElement($relicClaim.get(0));
                             return;
                         }
+                        // don't try to go to the next fight before taking a relic
+                        if (Storage.labRelicToPick()) return;
                         const $arrow = $('img[rel="labyrinth_hex_enter"].optimal-path');
                         if ($arrow.length) {
                             clickOnElement($arrow.get(0));
