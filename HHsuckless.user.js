@@ -569,7 +569,9 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         /*
          * - style the resource selectors into a grid instead of a list
          */
-        worldBossEvent();
+        if (CONFIG.wbtGrid.enabled) {
+            worldBossEvent();
+        }
     }
 
 
@@ -2440,6 +2442,8 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 { enabled: true, home: true, hideHotAssemblyBonusPath: false , hideSeasonalEventBonusPath: false },
             lab:
                 { enabled: true, favorites: true, shop: true, path: true, labSpace: true },
+            wbtGrid:
+                { enabled: true },
             editTeam:
                 { enabled: false },
             noWBT:
@@ -2780,6 +2784,21 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 $labStrategySelector.append($radioBtn);
             })
         }, '#labStrategySelector')
+
+        registerModule({
+            group: 'suckless',
+            configSchema: {
+                baseKey: 'wbtGrid',
+                label: 'arrange WBT resource selector into grid',
+                default: true,
+            },
+            run() {
+                config.wbtGrid = {
+                    enabled: true,
+                };
+            },
+        });
+        config.wbtGrid.enabled = false;
 
         registerModule({
             group: 'suckless',
