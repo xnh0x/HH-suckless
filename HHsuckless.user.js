@@ -16,6 +16,7 @@
 // @downloadURL  https://github.com/xnh0x/HH-suckless/raw/refs/heads/master/HHsuckless.user.js
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=hentaiheroes.com
 // @grant        GM_info
+// @grant        GM_addStyle
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_deleteValue
