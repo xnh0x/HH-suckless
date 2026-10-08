@@ -562,6 +562,16 @@ const local_now_ts = Math.floor(Date.now() / 1000);
         }
     }
 
+    if (window.location.pathname === '/world-boss-battle-won.html'
+        || window.location.pathname === '/world-boss-event.html'
+        || window.location.pathname === '/world-boss-event') {
+        /*
+         * - style the resource selectors into a grid instead of a list
+         */
+        worldBossEvent();
+    }
+
+
     if (window.location.pathname === '/event.html') {
         /*
          * - Sultry Mysteries
@@ -2145,6 +2155,67 @@ const local_now_ts = Math.floor(Date.now() / 1000);
                 }
             }
         });
+    }
+
+    function worldBossEvent() {
+        GM_addStyle(`
+            .multiplier-container .form-wrapper.resource .resource-list .selectric-items .selectric-scroll ul {
+                grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+            }
+            
+            .select-reward-container .form-wrapper.resource .resource-list .selectric-items .selectric-scroll ul {
+                grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+            }
+            
+            .form-wrapper.resource .resource-list .selectric-items .selectric-scroll ul {
+                display: grid !important;
+                gap: 4px !important;
+                padding: 4px !important;
+                margin: 0 !important;
+            
+                max-height: none !important;
+                overflow: visible !important;
+            }
+            
+            .form-wrapper.resource .resource-list .selectric-items li {
+                width: auto !important;
+                min-width: 0 !important;
+                min-height: 0 !important;
+                aspect-ratio: 1 / 1 !important;
+            
+                box-sizing: border-box !important;
+                float: none !important;
+                margin: 0 !important;
+                padding: 4px !important;
+            
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            
+                font-size: 0 !important;
+                line-height: 0 !important;
+            }
+            
+            .form-wrapper.resource .resource-list .selectric-items li span {
+                display: block !important;
+                flex: 0 0 auto !important;
+                margin: 0 auto !important;
+            }
+            
+            .form-wrapper.resource .resource-list .selectric-items li[data-index="0"] {
+                display: none !important;
+            }
+            
+            .form-wrapper.resource .resource-list .selectric-items {
+                width: auto !important;
+                max-height: none !important;
+            }
+            
+            .form-wrapper.resource .resource-list .selectric-items .selectric-scroll {
+                max-height: none !important;
+                overflow: visible !important;
+            }
+        `);
     }
 
     function sultryMysteries() {
